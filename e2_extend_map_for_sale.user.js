@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         E2 (earth2.io) - extension - for sale viewer
 // @namespace    http://earth2.io/
-// @version      0.0.1
+// @version      0.0.2
 // @description  adding extra buttons to map to view for sale properties
 // @author       Mihaly Szolnoki -> E2: MihajA414 - MSZY5BLXAP -> discord: mihaj
 // @match        https://app.earth2.io/
 // @grant        none
 // @license MIT
-// @currentversion	0.0.1 : initial version
+// @currentversion	0.0.2 : first bugfix
 // ==/UserScript==
 
 /* jshint esversion: 8 */
