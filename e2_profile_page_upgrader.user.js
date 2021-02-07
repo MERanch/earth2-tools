@@ -2,12 +2,12 @@
 // ==UserScript==
 // @name         E2 (earth2.io) - extension - profile page
 // @namespace    http://earth2.io/
-// @version      0.0.2
+// @version      0.0.3
 // @description  Extending the current functionality with additional filters, ordering and view mode (list, normal) and added night mode style
 // @author       Mihaly Szolnoki -> E2: MihajA414 - MSZY5BLXAP -> discord: mihaj
 // @match        https://app.earth2.io/
 // @grant        none
-// @currentversion	0.0.2 : more filters added, export all properties button added
+// @currentversion	0.0.3 : fixed wrong ordering for purchased date
 // ==/UserScript==
 
 /* jshint esversion: 8 */
@@ -1015,7 +1015,7 @@
                 });
         
                 properties.forEach(p => {
-                    let lastTransactionDate = p.transactionSet.map(tr => new Date(tr.time)).sort().reverse()[0];
+                    let lastTransactionDate = p.transactionSet.map(tr => new Date(tr.time)).sort((a,b) => a<b)[0];
                     p.purchasedDate = lastTransactionDate;
                     let countryAndArea = this.helper.getCountryAndArea(p);
                     if(this.helper.isAvailable(countryAndArea)){
