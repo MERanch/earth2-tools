@@ -7,7 +7,7 @@
 // @match        https://app.earth2.io/
 // @grant        none
 // @license MIT
-// @currentversion	0.0.2 : first bugfix
+// @currentversion	0.0.3 : removed window.mapInstance.
 // ==/UserScript==
 
 /* jshint esversion: 8 */
