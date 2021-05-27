@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Transaction export for earth2.io
 // @namespace    http://earth2.io/
-// @version      0.1.7
+// @version      0.2.0
 // @description  Adds a button on your #transactions page and lets you download your transaction data in csv format.
 // @author       Mihaly Szolnoki -> E2: MihajA414 - MSZY5BLXAP -> discord: mihaj
 // @match        https://app.earth2.io/
 // @grant        none
 // @license MIT
-// @currentversion	0.1.7 : Added debug logs for troubleshooting
+// @currentversion	0.2.0 : Changed querying to use the new API. Removed 3rd party links (no longer supplied by api)
 // ==/UserScript==
 
 /* jshint esversion: 8 */
@@ -32,7 +32,7 @@
         let seconds = now.getSeconds().toString().padStart(2, '0');
         let millisecs = now.getMilliseconds().toString().padStart(3, '0');
 
-        let result = `${hours}:${minute}:${seconds}::${millisecs}`;
+        let result = `${hours}:${minute}:${seconds}.${millisecs}`;
         if(getDateToo){
             let year = now.getFullYear().toString();
             let month = (now.getMonth()+1).toString().padStart(2,'0');
@@ -141,7 +141,7 @@
 			}
 
 			
-			console.log("parsedData: ",parsedData.data.getMyLandfields[0]);
+			//console.log("parsedData: ",parsedData.data.getMyLandfields[0]);
 			if(parsedData.data.getMyLandfields.length > 0){
 				return parsedData.data.getMyLandfields[0].owner.id;
 			} else {
@@ -154,7 +154,7 @@
 	}
 
     let exportTransactionsCSV = async () => {
-        let itemsPerPage = 1024;
+        let itemsPerPage = 100;
 
         let query = `{ getBalanceChanges(items: ${itemsPerPage}, page: #) { 
 				count, balanceChanges { 
@@ -164,29 +164,13 @@
 			}`;
 
         window.getTransactionPage = async (pageNumber) => {
-            let pageData = await fetch('/graphql', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', "X-CSRFToken": Cookies.get('csrftoken') },
-                body: JSON.stringify({"query": query.replace("#",pageNumber)})
-            }).then(r => {
-                return r.text();
-            }).then(data => {
-                let parsedData = window.tryParseJSON(data);
-
-                if(typeof(parsedData) === "string") {
-                    //console.log("failed to get data (maintenance?)",{parsedData: parsedData});
-                    return "";
-                }
-				
-				//console.log("parsedData", parsedData);
-
-                let keys = Object.keys(parsedData.data);
-                if (keys && keys.length > 0) {
-                    return { transactions : parsedData.data[keys[0]] };
-                }
-            });
-
-            return pageData;
+			
+			let offset = (pageNumber - 1) * itemsPerPage;
+			let url = `my/balance_changes/?offset=${offset}&limit=${itemsPerPage}`;
+			const data = await ApiClient.get(url);
+			//console.log(`data [${pageNumber}]: `, data);
+			
+			return data;
         }
 
         let firstPage = await window.getTransactionPage(1);
@@ -197,9 +181,9 @@
         } else {
 			console.log("[Tr.Ex] first page: ",firstPage);
 			
-            window.transactions = firstPage.transactions.balanceChanges;
+            window.transactions = firstPage.results;
 
-            let totalCount = firstPage.transactions.count;
+            let totalCount = firstPage.count;
             let pageCount = Math.ceil(totalCount / itemsPerPage);
             
 			console.log("[Tr.Ex] total "+totalCount+" pages: "+pageCount);
@@ -212,7 +196,8 @@
                 updateTransactionExportButtonText(`query page ${pageNumber-1} / ${pageCount}   ${getFormattedTime()}`);
                 let pageData = await window.getTransactionPage(pageNumber);
                 if( typeof(pageData) !== "string") {
-                    window.transactions = window.transactions.concat(pageData.transactions.balanceChanges);
+                    window.transactions = window.transactions.concat(pageData.results);
+					//console.log("trans: ",window.transactions);
                 } else {
                     failedPages.push(pageNumber);
                 }
@@ -227,7 +212,7 @@
 					
 					let pageData = await window.getTransactionPage(currentPage);
 					if(typeof(pageData) !== "string"){
-						window.transactions = window.transactions.concat(pageData.transactions.balanceChanges);
+						window.transactions = window.transactions.concat(pageData.results);
 						
 						retryCount = 0;
 						failedPages.shift();
@@ -236,20 +221,6 @@
 					}
 				}
 			}
-			
-			let temp = [];
-			window.transactions.forEach(t => {
-				if(!temp.some(tr => 
-					tr.createdDisplay === t.createdDisplay 
-					&& tr.balanceBefore === t.balanceBefore 
-					&& tr.balanceAfter === t.balanceAfter 
-					&& tr.amount === t.amount
-					&& tr.id === t.id
-					)){
-					temp.push(t);
-				}
-			});
-			window.transactions = temp;
 			
 			await createCSV();
 			
@@ -281,21 +252,26 @@
 				if(isAvailable(t.landfield.id)){
 					link = `https://app.earth2.io/#propertyInfo/${t.landfield.id}`;
 				}
-				if(isAvailable(t.landfield.owner)){
+				// if(isAvailable(t.landfield.owner)){
 					
-					if(t.landfield.owner.id !== currentUserId){
+					// if(t.landfield.owner.id !== currentUserId){
 					
-						thirdPartyName = cleanString(t.landfield.owner.username);
-						thirdPartyLink = `https://app.earth2.io/#profile/${t.landfield.owner.id}`;
+						// thirdPartyName = cleanString(t.landfield.owner.username);
+						// thirdPartyLink = `https://app.earth2.io/#profile/${t.landfield.owner.id}`;
 						
-					}
-				}
+					// }
+				// } else {
+					// console.log("no landfield for :",t);
+				// }
+			} else {
+				//Credit?
+				//console.log("unavailable landfield: ", t);
 			}
 			
-			return `${t.createdDisplay},${t.balanceChangeTypeDisplay},${t.amount},${t.balanceBefore},${t.balanceAfter},${loc},${desc},${link},${thirdPartyName},${thirdPartyLink}`;
+			return `${t.created_display},${t.balance_change_type_display},${t.amount},${t.balance_before},${t.balance_after},${loc},${desc},${link}`;
 		});
 
-		window.allTransactionsCSV = "If you want to thank me -> use my code -->MSZY5BLXAP (or tip me Paypal: csimbum@gmail.com)\r\nCreated on,Change Type,Amount,Balance before,Balance after,Location,Description,Link,3rd party,3rd party link\r\n" + allTransactions.join("\r\n");
+		window.allTransactionsCSV = "If you want to thank me -> use my code -->MSZY5BLXAP (or tip me Paypal: csimbum@gmail.com)\r\nCreated on,Change Type,Amount,Balance before,Balance after,Location,Description,Link\r\n" + allTransactions.join("\r\n");
 	}
 
     let createDownloadFile = (prefix, content) => {
@@ -310,4 +286,4 @@
 
 
     window.addEventListener("hashchange", () => { checkTransactionExportButton(); }, false);
-})();
+})(); 
