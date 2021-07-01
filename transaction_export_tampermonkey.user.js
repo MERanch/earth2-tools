@@ -7,7 +7,7 @@
 // @match        https://app.earth2.io/
 // @grant        none
 // @license MIT
-// @currentversion	0.2.0 : Changed querying to use the new API. Removed 3rd party links (no longer supplied by api)
+// @currentversion	0.2.1 : Changed querying again to use the new API. 3rd party link is still removed
 // ==/UserScript==
 
 /* jshint esversion: 8 */
@@ -156,12 +156,12 @@
     let exportTransactionsCSV = async () => {
         let itemsPerPage = 100;
 
-        let query = `{ getBalanceChanges(items: ${itemsPerPage}, page: #) { 
-				count, balanceChanges { 
-					id, description, balanceChangeTypeDisplay, amount, createdDisplay, countryFlag, balanceBefore, balanceAfter, landfield { description, tileCount, location, id, owner{ id, username } } 
-					} 
-				} 
-			}`;
+        // let query = `{ getBalanceChanges(items: ${itemsPerPage}, page: #) { 
+		// 		count, balanceChanges { 
+		// 			id, description, balanceChangeTypeDisplay, amount, createdDisplay, countryFlag, balanceBefore, balanceAfter, landfield { description, tileCount, location, id, owner{ id, username } } 
+		// 			} 
+		// 		} 
+		// 	}`;
 
         window.getTransactionPage = async (pageNumber) => {
 			
@@ -197,7 +197,7 @@
                 let pageData = await window.getTransactionPage(pageNumber);
                 if( typeof(pageData) !== "string") {
                     window.transactions = window.transactions.concat(pageData.results);
-					//console.log("trans: ",window.transactions);
+					console.log(` transactions at page [${i}]`,pageData.results);
                 } else {
                     failedPages.push(pageNumber);
                 }
@@ -242,15 +242,15 @@
 			let link = ""
 			let thirdPartyName = "";
 			let thirdPartyLink = "";
-			if(isAvailable(t.landfield)){
-				if(isAvailable(t.landfield["location"])){
-					loc = cleanString(t.landfield["location"].replaceAll(","," | "));
+			if(isAvailable(t.linked_object)){
+				if(isAvailable(t.linked_object.location)){
+					loc = cleanString(t.linked_object.location.replaceAll(","," | "));
 				}
-				if(isAvailable(t.landfield.description)){
-					desc = cleanString(t.landfield.description.replaceAll(","," | "));
+				if(isAvailable(t.linked_object.description)){
+					desc = cleanString(t.linked_object.description.replaceAll(","," | "));
 				}
-				if(isAvailable(t.landfield.id)){
-					link = `https://app.earth2.io/#propertyInfo/${t.landfield.id}`;
+				if(isAvailable(t.linked_object.id)){
+					link = `https://app.earth2.io/#propertyInfo/${t.linked_object.id}`;
 				}
 				// if(isAvailable(t.landfield.owner)){
 					
