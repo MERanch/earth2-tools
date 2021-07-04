@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Transaction export for earth2.io
 // @namespace    http://earth2.io/
-// @version      0.2.0
+// @version      0.2.1
 // @description  Adds a button on your #transactions page and lets you download your transaction data in csv format.
 // @author       Mihaly Szolnoki -> E2: MihajA414 - MSZY5BLXAP -> discord: mihaj
 // @match        https://app.earth2.io/
 // @grant        none
 // @license MIT
-// @currentversion	0.2.1 : Changed querying again to use the new API. 3rd party link is still removed
+// @currentversion	0.2.1 : Changed querying yet again to use the new API. 3rd party link is still removed
 // ==/UserScript==
 
 /* jshint esversion: 8 */
@@ -119,55 +119,15 @@
     }
 
     checkTransactionExportButton(); //check immediately
-	
-	let getCurrentUserId = async () => {
-		let query = `{
-                getMyLandfields {
-                    owner { id }
-                }
-            }`;
-		let currentUserId = await fetch('/graphql', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', "X-CSRFToken": Cookies.get('csrftoken') },
-			body: JSON.stringify({ "query" : query})
-		}).then(r => {
-			return r.text();
-		}).then(data => {
-			let parsedData = window.tryParseJSON(data);
-			
-			if(typeof(parsedData) === "string") {
-				//console.log("failed to get data (maintenance?)",{parsedData: parsedData});
-				return "";
-			}
-
-			
-			//console.log("parsedData: ",parsedData.data.getMyLandfields[0]);
-			if(parsedData.data.getMyLandfields.length > 0){
-				return parsedData.data.getMyLandfields[0].owner.id;
-			} else {
-				return "";
-			}
-			
-		});
-
-		return currentUserId;
-	}
 
     let exportTransactionsCSV = async () => {
         let itemsPerPage = 100;
 
-        // let query = `{ getBalanceChanges(items: ${itemsPerPage}, page: #) { 
-		// 		count, balanceChanges { 
-		// 			id, description, balanceChangeTypeDisplay, amount, createdDisplay, countryFlag, balanceBefore, balanceAfter, landfield { description, tileCount, location, id, owner{ id, username } } 
-		// 			} 
-		// 		} 
-		// 	}`;
-
         window.getTransactionPage = async (pageNumber) => {
 			
 			let offset = (pageNumber - 1) * itemsPerPage;
-			let url = `my/balance_changes/?offset=${offset}&limit=${itemsPerPage}`;
-			const data = await ApiClient.get(url);
+			let url = `api/v2/my/balance_changes/?limit=${itemsPerPage}&offset=${offset}`;
+			const data = await fetch(url).then(r => r.json()).then(r => r);
 			//console.log(`data [${pageNumber}]: `, data);
 			
 			return data;
@@ -233,7 +193,7 @@
     }
 	
 	let createCSV = async () => {
-		let currentUserId = await getCurrentUserId();
+		//let currentUserId = await getCurrentUserId();
 		
 		let allTransactions = window.transactions.map(t => {
 
