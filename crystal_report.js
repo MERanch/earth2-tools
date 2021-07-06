@@ -1,21 +1,23 @@
 // ==UserScript==
 // @name         Crystal/jewel export for earth2.io
 // @namespace    http://earth2.io/
-// @version      0.1.3
-// @description  Generate a csv report for your jewels with daily distribution | ordered by date and time 
+// @version      0.1.4
+// @description  Generate a csv report for your jewels with daily distribution | ordered by date and time
 // @author       Mihaly Szolnoki -> E2: mihajₒMSZY5BLXAP -> discord: mihaj#5170
 // @match        https://app.earth2.io/*
 // @grant        none
 // @license MIT
-// @currentversion	0.1.3 : small bugfix for page recognition and slowness of html element generation
+// @currentversion	0.1.4 : small one-off bugfix for data columns
 // ==/UserScript==
 
 /* jshint esversion: 8 */
 
+
+
 (function () {
     'use strict';
 
-    //console.log("start");
+    console.log("start");
 
     let Strings = Object.freeze({
         NOTAVAILABLE: "N/A",
@@ -845,7 +847,7 @@
         getAsCSVString (reportItem, index, addNewLine) {
             let jewelData = `${reportItem.spawnDateTime},${reportItem.size},${reportItem.tier},${reportItem.affectedProduction}`;
             let propertyData = `${reportItem.country},${reportItem.location},${helper.cleanString(reportItem.description)},${reportItem.tileClass},${reportItem.tileCount},${reportItem.jewelCount},${reportItem.center},${reportItem.link}`;
-            let result = `,,${index + 1},${jewelData},${propertyData}`;
+            let result = `,${index + 1},${jewelData},${propertyData}`;
             if (addNewLine) {
                 result += Strings.NEWLINE;
             }
