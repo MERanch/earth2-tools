@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Crystal/jewel export for earth2.io
 // @namespace    http://earth2.io/
-// @version      0.1.4
-// @description  Generate a csv report for your jewels with daily distribution | ordered by date and time
+// @version      0.1.5
+// @description  Generate a csv report for your jewels with daily distribution | ordered by spawn date and time 
 // @author       Mihaly Szolnoki -> E2: mihajₒMSZY5BLXAP -> discord: mihaj#5170
 // @match        https://app.earth2.io/*
 // @grant        none
 // @license MIT
-// @currentversion	0.1.4 : small one-off bugfix for data columns
+// @currentversion	0.1.5 : adjusted for bazaar, fixed some incorrect areas in mapping | NOTE: Only lists currently owned jewels in your inventory, not those you sold!
 // ==/UserScript==
 
 /* jshint esversion: 8 */
@@ -17,12 +17,12 @@
 (function () {
     'use strict';
 
-    console.log("start");
+    //console.log("start");
 
     let Strings = Object.freeze({
         NOTAVAILABLE: "N/A",
         NEWLINE: "\r\n",
-    })
+    });
 
     let MessageSeverity = Object.freeze({
         SUCCESS: "success",
@@ -30,296 +30,296 @@
         ERROR: "error",
     });
 
+    let Areas = Object.freeze({
+        EU: "Europe",
+        AF: "Africa",
+        AS: "Asia",
+        AM: "America",
+        AT: "Antarctica",
+        OC: "Oceania",
+    });
+
     class Helper {
         constructor() {
 
-            this.areas = ["Africa", "America", "Antarctica", "Asia", "Europe", "Oceania", "Other"]
+            this.areas = ["Africa", "America", "Antarctica", "Asia", "Europe", "Oceania", "Other"];
 
-            this.mappings = [
-                { code: "__", country: "other (international)?" },
+            this.mappings = new Map([
+                ["__", { code: "__", country: "other (international)?" }],
 
-                { code: "ad", area: "Europe", country: "Andorra" },
-                { code: "ae", area: "Africa", country: "Dubai" },
-                { code: "af", area: "Asia", country: "Afghanistan" },
-                { code: "ag", area: "America", country: "Antigua and Barbuda" },
-                { code: "ai", area: "America", country: "Anguilla" },
-                { code: "al", area: "Europe", country: "Albania" },
-                { code: "am", area: "Asia", country: "Armenia" },
-                { code: "ao", area: "Africa", country: "Angola" },
-                { code: "aq", area: "Antarctica", country: "Antarctica" },
-                { code: "ar", area: "America", country: "Argentina" },
-                { code: "as", area: "Oceania", country: "American Samoa" },
-                { code: "at", area: "Europe", country: "Austria" },
-                { code: "au", area: "Oceania", country: "Australia" },
-                { code: "aw", area: "America", country: "Aruba" },
-                { code: "az", area: "Asia", country: "Azerbaijan" },
+                //EU alphabetical
+                ["ad", { code: "ad", area: Areas.EU, country: "Andorra" }],
+                ["al", { code: "al", area: Areas.EU, country: "Albania" }],
+                ["at", { code: "at", area: Areas.EU, country: "Austria" }],
+                ["ba", { code: "ba", area: Areas.EU, country: "Bosnia Herzegovina" }],
+                ["be", { code: "be", area: Areas.EU, country: "Belgium" }],
+                ["bg", { code: "bg", area: Areas.EU, country: "Bulgaria" }],
+                ["by", { code: "by", area: Areas.EU, country: "Belarus" }],
+                ["ch", { code: "ch", area: Areas.EU, country: "Switzerland" }],
+                ["cy", { code: "cy", area: Areas.EU, country: "Cyprus" }],
+                ["cz", { code: "cz", area: Areas.EU, country: "Czech Republic" }],
+                ["de", { code: "de", area: Areas.EU, country: "Germany" }],
+                ["dk", { code: "dk", area: Areas.EU, country: "Denmark" }],
+                ["ee", { code: "ee", area: Areas.EU, country: "Estonia" }],
+                ["es", { code: "es", area: Areas.EU, country: "Spain" }],
+                ["fi", { code: "fi", area: Areas.EU, country: "Finland" }],
+                ["fo", { code: "fo", area: Areas.EU, country: "Faroe" }],
+                ["fr", { code: "fr", area: Areas.EU, country: "France" }],
+                ["gb", { code: "gb", area: Areas.EU, country: "United Kingdom" }],
+                ["gg", { code: "gg", area: Areas.EU, country: "Guernsey" }],
+                ["gi", { code: "gi", area: Areas.EU, country: "Gibraltar" }],
+                ["gr", { code: "gr", area: Areas.EU, country: "Greece" }],
+                ["hr", { code: "hr", area: Areas.EU, country: "Croatia" }],
+                ["hu", { code: "hu", area: Areas.EU, country: "Hungary" }],
+                ["ie", { code: "ie", area: Areas.EU, country: "Ireland" }],
+                ["im", { code: "im", area: Areas.EU, country: "Isle of Man" }],
+                ["is", { code: "is", area: Areas.EU, country: "Iceland" }],
+                ["it", { code: "it", area: Areas.EU, country: "Italy" }],
+                ["je", { code: "je", area: Areas.EU, country: "Jersey" }],
+                ["kv", { code: "kv", area: Areas.EU, country: "Kosovo" }],
+                ["li", { code: "li", area: Areas.EU, country: "Liechtenstein" }],
+                ["lt", { code: "lt", area: Areas.EU, country: "Lithuania" }],
+                ["lu", { code: "lu", area: Areas.EU, country: "Luxembourg" }],
+                ["lv", { code: "lv", area: Areas.EU, country: "Latvia" }],
+                ["mc", { code: "mc", area: Areas.EU, country: "Monaco" }],
+                ["md", { code: "md", area: Areas.EU, country: "Moldova" }],
+                ["me", { code: "me", area: Areas.EU, country: "Montenegro" }],
+                ["mk", { code: "mk", area: Areas.EU, country: "North Macedonia" }],
+                ["mt", { code: "mt", area: Areas.EU, country: "Malta" }],
+                ["nl", { code: "nl", area: Areas.EU, country: "Netherlands" }],
+                ["no", { code: "no", area: Areas.EU, country: "Norway" }],
+                ["pl", { code: "pl", area: Areas.EU, country: "Poland" }],
+                ["pt", { code: "pt", area: Areas.EU, country: "Portugal" }],
+                ["ro", { code: "ro", area: Areas.EU, country: "Romania" }],
+                ["rs", { code: "rs", area: Areas.EU, country: "Serbia" }],
+                ["se", { code: "se", area: Areas.EU, country: "Sweden" }],
+                ["si", { code: "si", area: Areas.EU, country: "Slovenia" }],
+                ["sj", { code: "sj", area: Areas.EU, country: "Svalbard and Jan Mayen" }],
+                ["sk", { code: "sk", area: Areas.EU, country: "Slovakia" }],
+                ["sm", { code: "sm", area: Areas.EU, country: "San Marino" }],
+                ["ua", { code: "ua", area: Areas.EU, country: "Ukraine" }],
+                ["va", { code: "va", area: Areas.EU, country: "Vatican City" }],
+                ["xy", { code: "xy", area: Areas.EU, country: "Sovereign Base Areas of Akrotiri and Dhekelia" }],
 
-                { code: "ba", area: "Europe", country: "Bosnia Herzegovina" },
-                { code: "bb", area: "America", country: "Barbados" },
-                { code: "bd", area: "Asia", country: "Bangladesh" },
-                { code: "be", area: "Europe", country: "Belgium" },
-                { code: "bf", area: "Africa", country: "Burkina Faso" },
-                { code: "bg", area: "Europe", country: "Bulgaria" },
-                { code: "bh", area: "Africa", country: "Bahrain" },
-                { code: "bi", area: "Africa", country: "Burundi" },
-                { code: "bj", area: "Africa", country: "Benin" },
-                { code: "bl", area: "America", country: "Saint Barthelemy" },
-                { code: "bm", area: "America", country: "Bermuda" },
-                { code: "bn", area: "Asia", country: "Brunei Darussalam" },
-                { code: "bo", area: "Africa", country: "Bolivia" },
-                { code: "br", area: "America", country: "Brazil" },
-                { code: "bs", area: "America", country: "Bahamas" },
-                { code: "bt", area: "Asia", country: "Bhutan" },
-                { code: "bw", area: "Africa", country: "Botswana" },
-                { code: "by", area: "Europe", country: "Belarus" },
-                { code: "bz", area: "America", country: "Belize" },
+                //AF(rica)
+                ["ao", { code: "ao", area: Areas.AF, country: "Angola" }],
+                ["bf", { code: "bf", area: Areas.AF, country: "Burkina Faso" }],
+                ["bi", { code: "bi", area: Areas.AF, country: "Burundi" }],
+                ["bj", { code: "bj", area: Areas.AF, country: "Benin" }],
+                ["bw", { code: "bw", area: Areas.AF, country: "Botswana" }],
+                ["cd", { code: "cd", area: Areas.AF, country: "Democratic Republic of Congo" }],
+                ["cf", { code: "cf", area: Areas.AF, country: "Central African Republic" }],
+                ["cg", { code: "cg", area: Areas.AF, country: "Congo" }],
+                ["ci", { code: "ci", area: Areas.AF, country: "Côte d'Ivoire" }],
+                ["cm", { code: "cm", area: Areas.AF, country: "Cameroon" }],
+                ["cv", { code: "cv", area: Areas.AF, country: "Cape Verde" }],
+                ["dj", { code: "dj", area: Areas.AF, country: "Djibouti" }],
+                ["dz", { code: "dz", area: Areas.AF, country: "Algeria" }],
+                ["eg", { code: "eg", area: Areas.AF, country: "Egypt" }],
+                ["eh", { code: "eh", area: Areas.AF, country: "Western Sahara" }],
+                ["er", { code: "er", area: Areas.AF, country: "Eritrea" }],
+                ["et", { code: "et", area: Areas.AF, country: "Ethiopia" }],
+                ["ga", { code: "ga", area: Areas.AF, country: "Gabon" }],
+                ["gh", { code: "gh", area: Areas.AF, country: "Ghana" }],
+                ["gm", { code: "gm", area: Areas.AF, country: "Gambia" }],
+                ["gn", { code: "gn", area: Areas.AF, country: "Guinea" }],
+                ["gq", { code: "gq", area: Areas.AF, country: "Equatorial Guinea" }],
+                ["gw", { code: "gw", area: Areas.AF, country: "Guinea-Bissau" }],
+                ["ke", { code: "ke", area: Areas.AF, country: "Kenya" }],
+                ["km", { code: "km", area: Areas.AF, country: "Comoros" }],
+                ["lr", { code: "lr", area: Areas.AF, country: "Liberia" }],
+                ["ls", { code: "ls", area: Areas.AF, country: "Lesotho" }],
+                ["ly", { code: "ly", area: Areas.AF, country: "Libya" }],
+                ["ma", { code: "ma", area: Areas.AF, country: "Morocco" }],
+                ["mg", { code: "mg", area: Areas.AF, country: "Madagascar" }],
+                ["ml", { code: "ml", area: Areas.AF, country: "Mali" }],
+                ["mu", { code: "mu", area: Areas.AF, country: "Mauritius" }],
+                ["mr", { code: "mr", area: Areas.AF, country: "Mauritania" }],
+                ["mz", { code: "mz", area: Areas.AF, country: "Mozambique" }],
+                ["mw", { code: "mw", area: Areas.AF, country: "Malawi" }],
+                ["na", { code: "na", area: Areas.AF, country: "Namibia" }],
+                ["ne", { code: "ne", area: Areas.AF, country: "Niger" }],
+                ["ng", { code: "ng", area: Areas.AF, country: "Nigeria" }],
+                ["re", { code: "re", area: Areas.AF, country: "Réunion" }],
+                ["rw", { code: "rw", area: Areas.AF, country: "Rwanda" }],
+                ["sc", { code: "sc", area: Areas.AF, country: "Seychelles" }],
+                ["sd", { code: "sd", area: Areas.AF, country: "Sudan" }],
+                ["sh", { code: "sh", area: Areas.AF, country: "Saint Helena" }],
+                ["sl", { code: "sl", area: Areas.AF, country: "Sierra Leone" }],
+                ["sn", { code: "sn", area: Areas.AF, country: "Senegal" }],
+                ["so", { code: "so", area: Areas.AF, country: "Somalia" }],
+                ["ss", { code: "ss", area: Areas.AF, country: "South Sudan" }],
+                ["st", { code: "st", area: Areas.AF, country: "Sao Tome and Principe" }],
+                ["sz", { code: "sz", area: Areas.AF, country: "Eswatini" }],
+                ["td", { code: "td", area: Areas.AF, country: "Chad" }],
+                ["tg", { code: "tg", area: Areas.AF, country: "Togo" }],
+                ["tn", { code: "tn", area: Areas.AF, country: "Tunisia" }],
+                ["tz", { code: "tz", area: Areas.AF, country: "Tanzania" }],
+                ["ug", { code: "ug", area: Areas.AF, country: "Uganda" }],
+                ["za", { code: "za", area: Areas.AF, country: "South Africa" }],
+                ["zm", { code: "zm", area: Areas.AF, country: "Zambia" }],
+                ["zw", { code: "zw", area: Areas.AF, country: "Zimbabwe" }],
+                ["yt", { code: "yt", area: Areas.AF, country: "Mayotte" }],
+                ["mayotte", { code: "mayotte", area: Areas.AF, country: "Mayotte" }],
+                ["reunion", { code: "reunion", area: Areas.AF, country: "Reunion" }],
 
-                { code: "ca", area: "America", country: "Canada" },
-                { code: "cd", area: "Africa", country: "Democratic Republic of Congo" },
-                { code: "cf", area: "Africa", country: "Central African Republic" },
-                { code: "cg", area: "Africa", country: "Congo" },
-                { code: "ch", area: "Europe", country: "Switzerland" },
-                { code: "ci", area: "Africa", country: "Côte d'Ivoire" },
-                { code: "ck", area: "Oceania", country: "Cook Islands" },
-                { code: "cl", area: "America", country: "Chile" },
-                { code: "cm", area: "Africa", country: "Cameroon" },
-                { code: "cn", area: "Asia", country: "China" },
-                { code: "co", area: "America", country: "Colombia" },
-                { code: "cr", area: "America", country: "Costa Rica" },
-                { code: "cu", area: "America", country: "Cuba" },
-                { code: "cv", area: "Africa", country: "Cape Verde" },
-                { code: "cw", area: "America", country: "Curaçao" },
-                { code: "cy", area: "Europe", country: "Cyprus" },
-                { code: "cz", area: "Europe", country: "Czech Republic" },
+                //AS(ia)
+                ["ae", { code: "ae", area: Areas.AS, country: "Dubai" }],
+                ["ae-aj", { coce: "ae-aj", area: Areas.AS, country: "United Arab Emirates (Ajman)" }],
+                ["ae-az", { coce: "ae-az", area: Areas.AS, country: "United Arab Emirates (Abu Dhabi)" }],
+                ["ae-du", { coce: "ae-du", area: Areas.AS, country: "United Arab Emirates (Dubai)" }],
+                ["ae-fu", { coce: "ae-fu", area: Areas.AS, country: "United Arab Emirates (Fujairah)" }],
+                ["ae-rk", { code: "ae-rk", area: Areas.AS, country: "United Arab Emirates (Ra'S Al Khaymah)" }],
+                ["ae-sh", { code: "ae-sh", area: Areas.AS, country: "United Arab Emirates (Sharjah)" }],
+                ["ae-uq", { code: "ae-uq", area: Areas.AS, country: "United Arab Emirates (Umm al-Quwain)" }],
+                ["af", { code: "af", area: Areas.AS, country: "Afghanistan" }],
+                ["am", { code: "am", area: Areas.AS, country: "Armenia" }],
+                ["az", { code: "az", area: Areas.AS, country: "Azerbaijan" }],
+                ["bd", { code: "bd", area: Areas.AS, country: "Bangladesh" }],
+                ["bh", { code: "bh", area: Areas.AS, country: "Bahrain" }],
+                ["bn", { code: "bn", area: Areas.AS, country: "Brunei Darussalam" }],
+                ["bt", { code: "bt", area: Areas.AS, country: "Bhutan" }],
+                ["cn", { code: "cn", area: Areas.AS, country: "China" }],
+                ["ge", { code: "ge", area: Areas.AS, country: "Georgia" }],
+                ["hk", { code: "hk", area: Areas.AS, country: "Hong Kong" }],
+                ["id", { code: "id", area: Areas.AS, country: "Indonesia" }],
+                ["in", { code: "in", area: Areas.AS, country: "India" }],
+                ["io", { code: "io", area: Areas.AS, country: "British Indian Ocean Territory" }],
+                ["jo", { code: "jo", area: Areas.AS, country: "Jordan" }],
+                ["jp", { code: "jp", area: Areas.AS, country: "Japan" }],
+                ["kg", { code: "kg", area: Areas.AS, country: "Kyrgyzstan" }],
+                ["kh", { code: "kh", area: Areas.AS, country: "Cambodia" }],
+                ["kp", { code: "kp", area: Areas.AS, country: "North Korea" }],
+                ["kr", { code: "kr", area: Areas.AS, country: "South Korea" }],
+                ["kw", { code: "kw", area: Areas.AS, country: "Kuwait" }],
+                ["kz", { code: "kz", area: Areas.AS, country: "Kazakhstan" }],
+                ["la", { code: "la", area: Areas.AS, country: "Laos" }],
+                ["lb", { code: "lb", area: Areas.AS, country: "Lebanon" }],
+                ["lk", { code: "lk", area: Areas.AS, country: "Sri Lanka" }],
+                ["mm", { code: "mm", area: Areas.AS, country: "Myanmar" }],
+                ["mn", { code: "mn", area: Areas.AS, country: "Mongolia" }],
+                ["mo", { code: "mo", area: Areas.AS, country: "Macau" }],
+                ["mp", { code: "mp", area: Areas.AS, country: "Northern Mariana Islands" }],
+                ["mv", { code: "mv", area: Areas.AS, country: "Maldives" }],
+                ["my", { code: "my", area: Areas.AS, country: "Malaysia" }],
+                ["np", { code: "np", area: Areas.AS, country: "Nepal" }],
+                ["om", { code: "om", area: Areas.AS, country: "Oman" }],
+                ["pf", { code: "pf", area: Areas.AS, country: "Paracel Islands" }],
+                ["ph", { code: "ph", area: Areas.AS, country: "Philippines" }],
+                ["pk", { code: "pk", area: Areas.AS, country: "Pakistan" }],
+                ["ps", { code: "ps", area: Areas.AS, country: "Palestinian Territories" }],
+                ["qa", { code: "qa", area: Areas.AS, country: "Qatar" }],
+                ["ru", { code: "ru", area: Areas.AS, country: "Russia" }],
+                ["sg", { code: "sg", area: Areas.AS, country: "Singapore" }],
+                ["sy", { code: "sy", area: Areas.AS, country: "Syria" }],
+                ["th", { code: "th", area: Areas.AS, country: "Thailand" }],
+                ["tj", { code: "tj", area: Areas.AS, country: "Tajikistan" }],
+                ["tl", { code: "tl", area: Areas.AS, country: "Timor Leste" }],
+                ["tm", { code: "tm", area: Areas.AS, country: "Turkmenistan" }],
+                ["tr", { code: "tr", area: Areas.AS, country: "Turkey" }],
+                ["tw", { code: "tw", area: Areas.AS, country: "Taiwan" }],
+                ["uz", { code: "uz", area: Areas.AS, country: "Uzbekistan" }],
+                ["vn", { code: "vn", area: Areas.AS, country: "Vietnam" }],
+                ["xx", { code: "xx", area: Areas.AS, country: "Spratly Islands" }],
+                ["ye", { code: "ye", area: Areas.AS, country: "Yemen" }],
+                ["united arab emirates", { code: "united arab emirates", area: Areas.AS, country: "United Arab Emirates" }],
 
-                { code: "de", area: "Europe", country: "Germany" },
-                { code: "dj", area: "Africa", country: "Djibouti" },
-                { code: "dk", area: "Europe", country: "Denmark" },
-                { code: "dm", area: "America", country: "Dominica" },
-                { code: "do", area: "America", country: "Dominican Republic" },
-                { code: "dz", area: "Africa", country: "Algeria" },
+                //AM(erica)
+                ["ag", { code: "ag", area: Areas.AM, country: "Antigua and Barbuda" }],
+                ["ai", { code: "ai", area: Areas.AM, country: "Anguilla" }],
+                ["ar", { code: "ar", area: Areas.AM, country: "Argentina" }],
+                ["aw", { code: "aw", area: Areas.AM, country: "Aruba" }],
+                ["bb", { code: "bb", area: Areas.AM, country: "Barbados" }],
+                ["bl", { code: "bl", area: Areas.AM, country: "Saint Barthelemy" }],
+                ["bm", { code: "bm", area: Areas.AM, country: "Bermuda" }],
+                ["bo", { code: "bo", area: Areas.AM, country: "Bolivia" }],
+                ["br", { code: "br", area: Areas.AM, country: "Brazil" }],
+                ["bs", { code: "bs", area: Areas.AM, country: "Bahamas" }],
+                ["bz", { code: "bz", area: Areas.AM, country: "Belize" }],
+                ["ca", { code: "ca", area: Areas.AM, country: "Canada" }],
+                ["cl", { code: "cl", area: Areas.AM, country: "Chile" }],
+                ["co", { code: "co", area: Areas.AM, country: "Colombia" }],
+                ["cr", { code: "cr", area: Areas.AM, country: "Costa Rica" }],
+                ["cu", { code: "cu", area: Areas.AM, country: "Cuba" }],
+                ["cw", { code: "cw", area: Areas.AM, country: "Curaçao" }],
+                ["dm", { code: "dm", area: Areas.AM, country: "Dominica" }],
+                ["do", { code: "do", area: Areas.AM, country: "Dominican Republic" }],
+                ["ec", { code: "ec", area: Areas.AM, country: "Ecuador" }],
+                ["fk", { code: "fk", area: Areas.AM, country: "Falkland Islands" }],
+                ["gd", { code: "gd", area: Areas.AM, country: "Grenada" }],
+                ["gf", { code: "gf", area: Areas.AM, country: "French Guiana" }],
+                ["gl", { code: "gl", area: Areas.AM, country: "Greenland" }],
+                ["gp", { code: "gp", area: Areas.AM, country: "Guadeloupe" }],
+                ["gt", { code: "gt", area: Areas.AM, country: "Guatemala" }],
+                ["gy", { code: "gy", area: Areas.AM, country: "Guyana" }],
+                ["hn", { code: "hn", area: Areas.AM, country: "Honduras" }],
+                ["ht", { code: "ht", area: Areas.AM, country: "Haiti" }],
+                ["jm", { code: "jm", area: Areas.AM, country: "Jamaica" }],
+                ["kn", { code: "kn", area: Areas.AM, country: "Saint Kitts and Nevis" }],
+                ["ky", { code: "ky", area: Areas.AM, country: "Cayman Islands" }],
+                ["lc", { code: "lc", area: Areas.AM, country: "Saint Lucia" }],
+                ["mf", { code: "mf", area: Areas.AM, country: "Saint Martin" }],
+                ["mq", { code: "mq", area: Areas.AM, country: "Martinique" }],
+                ["ms", { code: "ms", area: Areas.AM, country: "Montserrat" }],
+                ["mx", { code: "mx", area: Areas.AM, country: "Mexico" }],
+                ["ni", { code: "ni", area: Areas.AM, country: "Nicaragua" }],
+                ["pa", { code: "pa", area: Areas.AM, country: "Panama" }],
+                ["pe", { code: "pe", area: Areas.AM, country: "Peru" }],
+                ["pm", { code: "pm", area: Areas.AM, country: "Saint Pierre and Miquelon" }],
+                ["pr", { code: "pr", area: Areas.AM, country: "Puerto Rico" }],
+                ["py", { code: "py", area: Areas.AM, country: "Paraguay" }],
+                ["sr", { code: "sr", area: Areas.AM, country: "Suriname" }],
+                ["sv", { code: "sv", area: Areas.AM, country: "El Salvador" }],
+                ["sx", { code: "sx", area: Areas.AM, country: "Little Bay, Sint Maarten" }],
+                ["tc", { code: "tc", area: Areas.AM, country: "Turks and Caicos" }],
+                ["tt", { code: "tt", area: Areas.AM, country: "Trinidad and Tobago" }],
+                ["us", { code: "us", area: Areas.AM, country: "United States" }],
+                ["uy", { code: "uy", area: Areas.AM, country: "Uruguay" }],
+                ["vc", { code: "vc", area: Areas.AM, country: "Saint Vincent and the Grenadines" }],
+                ["ve", { code: "ve", area: Areas.AM, country: "Venezuela" }],
+                ["vg", { code: "vg", area: Areas.AM, country: "British Virgin Islands" }],
+                ["vi", { code: "vi", area: Areas.AM, country: "US Virgin Islands" }],
+                ["martinique", { code: "martinique", area: Areas.AM, country: "Martinique" }],
 
-                { code: "ec", area: "America", country: "Ecuador" },
-                { code: "ee", area: "Europe", country: "Estonia" },
-                { code: "eg", area: "Africa", country: "Egypt" },
-                { code: "eh", area: "Africa", country: "Western Sahara" },
-                { code: "er", area: "Africa", country: "Eritrea" },
-                { code: "es", area: "Europe", country: "Spain" },
-                { code: "et", area: "Africa", country: "Ethiopia" },
+                //Antarctica
+                ["aq", { code: "aq", area: Areas.AT, country: "Antarctica" }],
+                ["gs", { code: "gs", area: Areas.AT, country: "South Georgia and the South Sandwich Islands" }],
+                ["hm", { code: "hm", area: Areas.AT, country: "Heard and McDonald Islands" }],
+                ["tf", { code: "tf", area: Areas.AT, country: "French Southern Territories" }],
 
-                { code: "fi", area: "Europe", country: "Finland" },
-                { code: "fj", area: "Oceania", country: "Fiji" },
-                { code: "fk", area: "America", country: "Falkland Islands" },
-                { code: "fm", area: "Oceania", country: "Micronesia" },
-                { code: "fo", area: "Europe", country: "Faroe" },
-                { code: "fr", area: "Europe", country: "France" },
-
-                { code: "ga", area: "Africa", country: "Gabon" },
-                { code: "gb", area: "Europe", country: "United Kingdom" },
-                { code: "gd", area: "America", country: "Grenada" },
-                { code: "ge", area: "Asia", country: "Georgia" },
-                { code: "gg", area: "Europe", country: "Guernsey" },
-                { code: "gh", area: "Africa", country: "Ghana" },
-                { code: "gi", area: "Europe", country: "Gibraltar" },
-                { code: "gl", area: "America", country: "Greenland" },
-                { code: "gm", area: "Africa", country: "Gambia" },
-                { code: "gn", area: "Africa", country: "Guinea" },
-                { code: "gq", area: "Africa", country: "Equatorial Guinea" },
-                { code: "gr", area: "Europe", country: "Greece" },
-                { code: "gs", area: "Antarctica", country: "South Georgia and the South Sandwich Islands" },
-                { code: "gt", area: "America", country: "Guatemala" },
-                { code: "gu", area: "Oceania", country: "Guam" },
-                { code: "gw", area: "Africa", country: "Guinea-Bissau" },
-                { code: "gy", area: "America", country: "Guyana" },
-
-                { code: "hk", area: "Asia", country: "Hong Kong" },
-                { code: "hm", area: "Antarctica", country: "Heard and McDonald Islands" },
-                { code: "hn", area: "America", country: "Honduras" },
-                { code: "hr", area: "Europe", country: "Croatia" },
-                { code: "ht", area: "America", country: "Haiti" },
-                { code: "hu", area: "Europe", country: "Hungary" },
-
-                { code: "id", area: "Asia", country: "Indonesia" },
-                { code: "ie", area: "Europe", country: "Ireland" },
-                { code: "im", area: "Europe", country: "Isle of Man" },
-                { code: "in", area: "Asia", country: "India" },
-                { code: "io", area: "Asia", country: "British Indian Ocean Territory" },
-                { code: "is", area: "Europe", country: "Iceland" },
-                { code: "it", area: "Europe", country: "Italy" },
-
-                { code: "je", area: "Europe", country: "Jersey" },
-                { code: "jm", area: "America", country: "Jamaica" },
-                { code: "jo", area: "Asia", country: "Jordan" },
-                { code: "jp", area: "Asia", country: "Japan" },
-
-                { code: "ke", area: "Africa", country: "Kenya" },
-                { code: "kg", area: "Asia", country: "Kyrgyzstan" },
-                { code: "kh", area: "Asia", country: "Cambodia" },
-                { code: "ki", area: "Oceania", country: "Kiribati" },
-                { code: "km", area: "Africa", country: "Comoros" },
-                { code: "kn", area: "America", country: "Saint Kitts and Nevis" },
-                { code: "kp", area: "Asia", country: "North Korea" },
-                { code: "kr", area: "Asia", country: "South Korea" },
-                { code: "kw", area: "Asia", country: "Kuwait" },
-                { code: "ky", area: "America", country: "Cayman Islands" },
-                { code: "kz", area: "Asia", country: "Kazakhstan" },
-
-                { code: "la", area: "Asia", country: "Laos" },
-                { code: "lb", area: "Asia", country: "Lebanon" },
-                { code: "lc", area: "America", country: "Saint Lucia" },
-                { code: "li", area: "Europe", country: "Liechtenstein" },
-                { code: "lk", area: "Asia", country: "Sri Lanka" },
-                { code: "lr", area: "Africa", country: "Liberia" },
-                { code: "ls", area: "Africa", country: "Lesotho" },
-                { code: "lt", area: "Europe", country: "Lithuania" },
-                { code: "lu", area: "Europe", country: "Luxembourg" },
-                { code: "lv", area: "Europe", country: "Latvia" },
-                { code: "ly", area: "Africa", country: "Libya" },
-
-                { code: "ma", area: "Africa", country: "Morocco" },
-                { code: "mc", area: "Europe", country: "Monaco" },
-                { code: "md", area: "Europe", country: "Moldova" },
-                { code: "me", area: "Europe", country: "Montenegro" },
-                { code: "mf", area: "America", country: "Saint Martin" },
-                { code: "mg", area: "Africa", country: "Madagascar" },
-                { code: "mh", area: "Oceania", country: "Marshall Islands" },
-                { code: "mk", area: "Europe", country: "North Macedonia" },
-                { code: "ml", area: "Africa", country: "Mali" },
-                { code: "mm", area: "Asia", country: "Myanmar" },
-                { code: "mn", area: "Asia", country: "Mongolia" },
-                { code: "mo", area: "Asia", country: "Macau" },
-                { code: "mp", area: "Asia", country: "Northern Mariana Islands" },
-                { code: "mr", area: "Africa", country: "Mauritania" },
-                { code: "ms", area: "America", country: "Montserrat" },
-                { code: "mt", area: "Europe", country: "Malta" },
-                { code: "mu", area: "Africa", country: "Mauritius" },
-                { code: "mv", area: "Asia", country: "Maldives" },
-                { code: "mw", area: "Africa", country: "Malawi" },
-                { code: "mx", area: "America", country: "Mexico" },
-                { code: "my", area: "Asia", country: "Malaysia" },
-                { code: "mz", area: "Africa", country: "Mozambique" },
-
-                { code: "na", area: "Africa", country: "Namibia" },
-                { code: "ne", area: "Africa", country: "Niger" },
-                { code: "nf", area: "Oceania", country: "Norfolk Island" },
-                { code: "ng", area: "Africa", country: "Nigeria" },
-                { code: "ni", area: "America", country: "Nicaragua" },
-                { code: "nl", area: "Europe", country: "Netherlands" },
-                { code: "no", area: "Europe", country: "Norway" },
-                { code: "np", area: "Asia", country: "Nepal" },
-                { code: "nr", area: "Oceania", country: "Nauru" },
-                { code: "nu", area: "Oceania", country: "Niue" },
-                { code: "nz", area: "Oceania", country: "New Zealand" },
-
-                { code: "om", area: "Asia", country: "Oman" },
-
-                { code: "pa", area: "America", country: "Panama" },
-                { code: "pe", area: "America", country: "Peru" },
-                { code: "pf", area: "Oceania", country: "Polynesia" },
-                { code: "pg", area: "Oceania", country: "Papua New Guinea" },
-                { code: "ph", area: "Asia", country: "Philippines" },
-                { code: "pk", area: "Asia", country: "Pakistan" },
-                { code: "pl", area: "Europe", country: "Poland" },
-                { code: "pn", area: "Oceania", country: "Pitcairn" },
-                { code: "pr", area: "America", country: "Puerto Rico" },
-                { code: "ps", area: "Asia", country: "Palestinian Territories" },
-                { code: "pt", area: "Europe", country: "Portugal" },
-                { code: "pw", area: "Oceania", country: "Palau" },
-                { code: "py", area: "America", country: "Paraguay" },
-
-                { code: "qa", area: "Asia", country: "Qatar" },
-
-                { code: "ro", area: "Europe", country: "Romania" },
-                { code: "rs", area: "Europe", country: "Serbia" },
-                { code: "ru", area: "Asia", country: "Russia" },
-                { code: "rw", area: "Africa", country: "Rwanda" },
-
-                { code: "sb", area: "Oceania", country: "Solomon Islands" },
-                { code: "sc", area: "Africa", country: "Seychelles" },
-                { code: "sd", area: "Africa", country: "Sudan" },
-                { code: "se", area: "Europe", country: "Sweden" },
-                { code: "sg", area: "Asia", country: "Singapore" },
-                { code: "sh", area: "Africa", country: "Saint Helena" },
-                { code: "si", area: "Europe", country: "Slovenia" },
-                { code: "sj", area: "Europe", country: "Svalbard and Jan Mayen" },
-                { code: "sk", area: "Europe", country: "Slovakia" },
-                { code: "sl", area: "Africa", country: "Sierra Leone" },
-                { code: "sm", area: "Europe", country: "San Marino" },
-                { code: "sn", area: "Africa", country: "Senegal" },
-                { code: "so", area: "Africa", country: "Somalia" },
-                { code: "sr", area: "America", country: "Suriname" },
-                { code: "ss", area: "Africa", country: "South Sudan" },
-                { code: "st", area: "Africa", country: "Sao Tome and Principe" },
-                { code: "sv", area: "America", country: "El Salvador" },
-                { code: "sx", area: "America", country: "Little Bay, Sint Maarten" },
-                { code: "sy", area: "Asia", country: "Syria" },
-                { code: "sz", area: "Africa", country: "Eswatini" },
-
-                { code: "tc", area: "America", country: "Turks and Caicos" },
-                { code: "td", area: "Africa", country: "Chad" },
-                { code: "tf", area: "Antarctica", country: "French Southern Territories" },
-                { code: "tg", area: "Africa", country: "Togo" },
-                { code: "th", area: "Asia", country: "Thailand" },
-                { code: "tj", area: "Asia", country: "Tajikistan" },
-                { code: "tl", area: "Asia", country: "Timor Leste" },
-                { code: "tm", area: "Asia", country: "Turkmenistan" },
-                { code: "tn", area: "Africa", country: "Tunisia" },
-                { code: "to", area: "Oceania", country: "Tonga" },
-                { code: "tr", area: "Asia", country: "Turkey" },
-                { code: "tt", area: "America", country: "Trinidad and Tobago" },
-                { code: "tv", area: "Oceania", country: "Tuvalu" },
-                { code: "tw", area: "Asia", country: "Taiwan" },
-                { code: "tz", area: "Africa", country: "Tanzania" },
-
-                { code: "ua", area: "Europe", country: "Ukraine" },
-                { code: "ug", area: "Africa", country: "Uganda" },
-                { code: "us", area: "America", country: "United States" },
-                { code: "um", area: "Oceania", country: "US Minor Outlying Islands" },
-                { code: "uy", area: "America", country: "Uruguay" },
-                { code: "uz", area: "Asia", country: "Uzbekistan" },
-
-                { code: "va", area: "Europe", country: "Vatican City" },
-                { code: "vc", area: "America", country: "Saint Vincent and the Grenadines" },
-                { code: "ve", area: "America", country: "Venezuela" },
-                { code: "vg", area: "America", country: "British Virgin Islands" },
-                { code: "vi", area: "America", country: "US Virgin Islands" },
-                { code: "vn", area: "Asia", country: "Vietnam" },
-                { code: "vu", area: "Oceania", country: "Vanuatu" },
-
-                { code: "ws", area: "Oceania", country: "Samoa" },
-
-                { code: "xx", area: "Asia", country: "Spratly Islands" },
-                { code: "xy", area: "Europe", country: "Sovereign Base Areas of Akrotiri and Dhekelia" },
-
-                { code: "ye", area: "Asia", country: "Yemen" },
-
-                { code: "za", area: "Africa", country: "South Africa" },
-                { code: "zm", area: "Africa", country: "Zambia" },
-                { code: "zw", area: "Africa", country: "Zimbabwe" },
-
-                //----
-                { code: "united arab emirates", area: "Asia", country: "United Arab Emirates" },
-                { code: "mayotte", area: "Africa", country: "Mayotte" },
-                { code: "reunion", area: "Africa", country: "Reunion" },
-                { code: "martinique", area: "America", country: "Martinique" },
-
-                //----
-                { code: "gf", area: "America", country: "French Guiana" },
-                { code: "gp", area: "America", country: "Guadeloupe" },
-
-                { code: "yt", area: "Africa", country: "Mayotte" },
-                { code: "nc", area: "Oceania", country: "New Caledonia" },
-                { code: "re", area: "Africa", country: "Réunion" },
-                { code: "pm", area: "America", country: "Saint Pierre and Miquelon" },
-                { code: "tk", area: "Oceania", country: "Tokelau" },
-                { code: "wf", area: "Oceania", country: "Wallis and Futuna" },
-
-            ];
+                //OC(eania)
+                ["as", { code: "as", area: Areas.OC, country: "American Samoa" }],
+                ["au", { code: "au", area: Areas.OC, country: "Australia" }],
+                ["ck", { code: "ck", area: Areas.OC, country: "Cook Islands" }],
+                ["fj", { code: "fj", area: Areas.OC, country: "Fiji" }],
+                ["fm", { code: "fm", area: Areas.OC, country: "Micronesia" }],
+                ["gu", { code: "gu", area: Areas.OC, country: "Guam" }],
+                ["ki", { code: "ki", area: Areas.OC, country: "Kiribati" }],
+                ["mh", { code: "mh", area: Areas.OC, country: "Marshall Islands" }],
+                ["nf", { code: "nf", area: Areas.OC, country: "Norfolk Island" }],
+                ["nr", { code: "nr", area: Areas.OC, country: "Nauru" }],
+                ["nu", { code: "nu", area: Areas.OC, country: "Niue" }],
+                ["nz", { code: "nz", area: Areas.OC, country: "New Zealand" }],
+                ["pf", { code: "pf", area: Areas.OC, country: "Polynesia" }],
+                ["pg", { code: "pg", area: Areas.OC, country: "Papua New Guinea" }],
+                ["pn", { code: "pn", area: Areas.OC, country: "Pitcairn" }],
+                ["pw", { code: "pw", area: Areas.OC, country: "Palau" }],
+                ["sb", { code: "sb", area: Areas.OC, country: "Solomon Islands" }],
+                ["to", { code: "to", area: Areas.OC, country: "Tonga" }],
+                ["tv", { code: "tv", area: Areas.OC, country: "Tuvalu" }],
+                ["um", { code: "um", area: Areas.OC, country: "US Minor Outlying Islands" }],
+                ["vu", { code: "vu", area: Areas.OC, country: "Vanuatu" }],
+                ["ws", { code: "ws", area: Areas.OC, country: "Samoa" }],
+                ["nc", { code: "nc", area: Areas.OC, country: "New Caledonia" }],
+                ["tk", { code: "tk", area: Areas.OC, country: "Tokelau" }],
+                ["wf", { code: "wf", area: Areas.OC, country: "Wallis and Futuna" }],
+                ["fg", { code: "fg", area: Areas.OC, country: "French Polynesia" }],
+            ]);
         }
 
-        isAvailable (object) { return typeof object !== "undefined" && object !== null && object !== ""; };
+        isAvailable(object) { return typeof object !== "undefined" && object !== null && object !== ""; };
 
-        tryParseJSON (data) {
+        tryParseJSON(data) {
             try {
                 let result = JSON.parse(data);
                 return result;
@@ -329,7 +329,7 @@
             }
         };
 
-        cleanString (input) {
+        cleanString(input) {
             let output = "";
             if (this.isAvailable(input)) {
                 for (var i = 0; i < input.length; i++) {
@@ -342,7 +342,7 @@
             return output;
         };
 
-        getFormattedTime (getDateToo) {
+        getFormattedTime(getDateToo) {
             let now = new Date();
 
             let hours = now.getHours().toString().padStart(2, '0');
@@ -360,8 +360,7 @@
             return result;
         };
 
-
-        createDownloadFile (prefix, content) {
+        createDownloadFile(prefix, content) {
             let link = document.createElement('a');
             link.download = `${prefix}-${this.getFormattedTime(true).replaceAll(":", "_")}.csv`;
             let blob = new File(["\uFEFF" + content], { type: 'text/csv;charset=utf-8' }); //"\uFEFF" to ensure correct encoding
@@ -371,7 +370,7 @@
             }
         }
 
-        showCustomToast (severity, message, dismissOthers) {
+        showCustomToast(severity, message, dismissOthers) {
             try {
                 console.log(`[${severity}] : ${message}`);
 
@@ -398,27 +397,36 @@
             }
         }
 
-        getCountryAndArea (property) {
+        getCountryAndArea(property) {
             let result = null;
             try {
-                let propertyLocationParts = property["location"].split(",");
-                if (propertyLocationParts.length > 0) {
-                    let lastLocationPart = propertyLocationParts[propertyLocationParts.length - 1].trim();
-                    let matchingCountry = this.mappings.filter(m => m.country === lastLocationPart);
-                    if (matchingCountry.length > 0) {
-                        result = matchingCountry[0];
+
+                let matchingCountry = this.mappings.get(property.country.toLowerCase());
+                if (!this.isAvailable(matchingCountry)) {
+                    console.warn(`no country data for [${property.country.toLowerCase()}]`, property);
+
+                    let propertyLocationParts = property["location"].split(",");
+                    if (propertyLocationParts.length > 0) {
+                        let lastLocationPart = propertyLocationParts[propertyLocationParts.length - 1].trim();
+                        let matchingCountry = this.mappings.values.filter(m => m.country === lastLocationPart);
+                        if (matchingCountry.length > 0) {
+                            result = matchingCountry[0];
+                        } else {
+                            console.log(`no matching country for [${lastLocationPart}]: loc:[${property["location"]}]`, property);
+                        }
                     } else {
-                        console.log(`no matching country for [${lastLocationPart}]: loc:[${property["location"]}]`, property);
+                        console.log("invalid location", property);
                     }
+
                 } else {
-                    console.log("invalid location", property);
+                    result = matchingCountry;
                 }
+
+
             } catch (e) {
                 console.log("error in [getArea]", property);
                 result = null;
             }
-
-
 
             return result;
         }
@@ -465,9 +473,29 @@
             return csrfToken;
         }
 
-        getUserLandFields = async () => {
-            helper.showCustomToast(MessageSeverity.SUCCESS, "getting user properties");
+        async getUserLandFields() {
+            let success = false;
+            try {
+                let properties = await this.getUserLandFieldsAll();
+                success = true;
+                return properties;
+            } catch (e) {
+                console.log("error in [getUserLandFields I]", e);
+            }
 
+            if (!success) {
+                console.log("method I failed, trying alternative");
+
+                try {
+                    let properties = await this.getUserLandFieldsPaged(window.auth0user.id);
+                    return properties;
+                } catch (e) {
+                    console.log("method II failed too", e);
+                }
+            }
+        }
+
+        async getUserLandFieldsAll() {
             let csrfToken = await this.getCSRFToken();
 
             let query =
@@ -492,17 +520,149 @@
 
                 let parsedData = helper.tryParseJSON(data);
                 if (parsedData != null) {
-                    //console.log("data: ", parsedData);
+                    console.log("data: ", parsedData);
                     return parsedData.data.getMyLandfields;
                 }
 
                 return null;
 
             }).catch((error) => {
-                console.log("fetch error in cacheproperties", error);
+                console.log("fetch error in cacheproperties (getUserLandFields)", error);
+            });
+
+            this.setCustomProperties(properties);
+
+            return properties;
+        }
+
+        async getUserLandFieldsPaged(userId) {
+            let itemsPerPage = 1024;
+            let query = `{
+                getUserLandfields(userId: "${userId}", page: ##, items: ${itemsPerPage}) {
+                    count,        
+                    landfields {
+                        id, forSale, thumbnail, description, location, center, country, tileCount, tileClass, purchasedStr, purchasedTimestamp, purchaseValue, currentValue, tradingValue, price, transactionSet{ price, time }
+                    }
+                }
+            }`;
+
+            let firstPage = await this.getUserLandfieldPage(query, 1);
+            console.log("first page: ", firstPage);
+            let result = firstPage.landfields;
+
+            let totalCount = firstPage.count;
+            let pageCount = Math.ceil(totalCount / itemsPerPage);
+
+            console.log("total page count: " + pageCount);
+            for (let i = 2; i <= pageCount; i++) {
+                let pageData = await this.getUserLandfieldPage(query, i, pageCount);
+                if (!this.helper.isAvailable(pageData)) {
+                    throw new Error("error during fetch");
+                } else {
+                    result = result.concat(pageData.landfields);
+                }
+            }
+
+            this.setCustomProperties(result);
+
+            return result;
+        }
+
+        async getUserLandfieldPage(query, pageNumber, pageCount) {
+            if (helper.isAvailable(pageCount)) {
+                //console.log(`query page ${pageNumber} / ${pageCount}`);
+                helper.showCustomToast(MessageSeverity.SUCCESS, `query page ${pageNumber} / ${pageCount}`);
+            }
+
+            let actualQuery = JSON.stringify({ "query": query.replace("##", pageNumber) });
+
+            let csrfToken = await this.getCSRFToken();
+            let properties = await fetch('/graphql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', "x-csrftoken": csrfToken.value },
+                body: actualQuery
+            }).then(r => {
+                return r.text();
+            }).then(data => {
+                let result = null;
+                //console.log("data: ", data);
+
+                let parsedData = helper.tryParseJSON(data);
+                if (parsedData != null) {
+                    //console.log("data: ", parsedData);
+                    result = parsedData.data.getUserLandfields;
+                }
+
+                return result;
+
+            }).catch((error) => {
+                console.log("fetch error in cacheproperties (getUserLandfieldPage)", error);
             });
 
             return properties;
+        }
+
+        async getPropertyInfoShort(propertyId) {
+            let query = `{
+                getLandfieldDetail(landfieldId: "#LANDID#") {
+                    id,
+                    location,
+                    country,
+                    tileClass,
+                    tileCount,
+                    owner {
+                        id,
+                        username,
+                        countryFlag,
+                    },
+                }
+            }`;
+
+            let actualQuery = JSON.stringify({ "query": query.replace("#LANDID#", propertyId) });
+
+            let csrfToken = await this.getCSRFToken();
+            let properties = await fetch('/graphql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', "x-csrftoken": csrfToken.value },
+                body: actualQuery
+            }).then(r => {
+                return r.text();
+            }).then(data => {
+                let result = null;
+                //console.log("data: ", data);
+
+                let parsedData = helper.tryParseJSON(data);
+                if (parsedData != null) {
+                    //console.log("data: ", parsedData);
+                    result = parsedData.data.getLandfieldDetail;
+                }
+
+                return result;
+
+            }).catch((error) => {
+                console.log("fetch error in cacheproperties (getUserLandfieldPage)", error);
+            });
+
+            return properties;
+        }
+
+        setCustomProperties(properties) {
+            properties.forEach(p => {
+                let lastTransactionDate = p.transactionSet.map(tr => new Date(tr.time)).sort((a, b) => a < b)[0];
+                p.purchasedDate = lastTransactionDate;
+                let countryAndArea = helper.getCountryAndArea(p);
+                if (helper.isAvailable(countryAndArea)) {
+                    p.area = countryAndArea.area;
+                    p.country = countryAndArea.country;
+                } else {
+                    p.area = "Other";
+                    p.country = "";
+                }
+
+                p.valueIncreaseUSD = p.currentValue - p.purchaseValue;
+
+                //get the #tags
+            });
         }
     }
 
@@ -511,23 +671,23 @@
             this.crystalExportSelector = "#crystal-export";
         }
 
-        isResourcesPage () {
+        isResourcesPage() {
             return window.location.hash.includes("resources");
         }
 
-        init () {
+        init() {
             if (this.isResourcesPage()) {
-                let spans = Array.from(document.querySelectorAll("span"));
+                let divs = Array.from(document.querySelectorAll("div"));
                 let inventoryLabel = null;
-                for (let i = 0; i < spans.length; i++) {
-                    if (spans[i].textContent === "Inventory") {
-                        //console.log("span found");
-                        inventoryLabel = spans[i];
+                for (let i = 0; i < divs.length; i++) {
+                    if (divs[i].textContent === "Inventory") {
+                        //console.log("inventory found");
+                        inventoryLabel = divs[i];
                         break;
                     }
                 }
                 if (inventoryLabel != null) {
-                    let inventory = inventoryLabel.parentElement.parentElement.parentElement;
+                    let inventory = inventoryLabel.parentElement.parentElement;
                     let html = `
                     <div style="width:100%;height:50px;background:#f0f0f0;">
                         <div style="display:flex; justify-content:space-evenly;">
@@ -547,7 +707,7 @@
             }
         }
 
-        async handleExportClick () {
+        async handleExportClick() {
             console.log("export click");
 
             let api = new E2API();
@@ -558,16 +718,31 @@
             if (jewels.length === 0) {
                 helper.showCustomToast(MessageSeverity.ERROR, "No jewels in your inventory");
             } else {
-                let userProperties = await api.getUserLandFields();
+                //let userProperties = await api.getUserLandFields();
                 //console.log("user properties: ", userProperties);
 
                 let reportItems = [];
                 jewels = jewels.filter(j => helper.isAvailable(j));
+
+                let allPropertyIds = [... new Set(jewels.map(m => m.landfield.id))];
+                //console.log(`all property ids: `, allPropertyIds);
+
+                let jewelProperties = [];
+                for (let i = 0; i < allPropertyIds.length; i++) {
+                    let propertyId = allPropertyIds[i];
+                    console.log(`processing ${i + 1}/${allPropertyIds.length} related property`);
+                    jewelProperties.push(await api.getPropertyInfoShort(propertyId));
+                }
+
+                let userProperties = jewelProperties.filter(p => p.owner.id === window.auth0user.id);
+
+                console.log(`related properties: `, { all: jewelProperties, user: userProperties });
+
                 jewels.forEach(jewel => {
-                    reportItems.push(new JewelReportItem(jewel, userProperties));
+                    reportItems.push(new JewelReportItem(jewel, jewelProperties.find(p => p.id === jewel.landfield.id)));
                 });
                 reportItems = reportItems.sort((a, b) => a.spawnDateTime > b.spawnDateTime ? 1 : -1);
-
+                window.reportItems = reportItems;
                 //console.log("report items: ", reportItems);
                 //console.table(reportItems);
 
@@ -665,16 +840,16 @@
 
     class JewelReportItem {
 
-        constructor(jewel, userProperties) {
+        constructor(jewel, propertyInfo) {
             this.jewel = jewel;
-            this.userProperties = userProperties;
+            this.propertyInfo = propertyInfo;
 
             this.initDefault();
 
             this.init();
         }
 
-        initDefault () {
+        initDefault() {
             this.area = Strings.NOTAVAILABLE;
             this.country = Strings.NOTAVAILABLE;
             this.link = Strings.NOTAVAILABLE;
@@ -687,10 +862,11 @@
             this.spawnDate = Strings.NOTAVAILABLE;
             this.size = Strings.NOTAVAILABLE;
             this.tier = Strings.NOTAVAILABLE;
-            this.center = String.NOTAVAILABLE;
+            this.center = Strings.NOTAVAILABLE;
+            this.ownSpawn = Strings.NOTAVAILABLE;
         }
 
-        init () {
+        init() {
 
             let jewel = this.jewel;
             if (!helper.isAvailable(jewel)) {
@@ -701,27 +877,26 @@
                 if (!helper.isAvailable(jewelLandField)) {
                     console.log("no landfield for jewel: ", this.jewel);
                 } else {
-                    let matchingProperty = this.userProperties.find(p => p.id === this.jewel.landfield.id);
-                    if (!helper.isAvailable(matchingProperty)) {
-                        helper.showCustomToast(MessageSeverity.WARNING, `no matching property for crystal [${this.jewel.id}]`);
+                    if (!helper.isAvailable(this.propertyInfo)) {
+                        console.warn(`property info empty!, jewel: `, this.jewel)
                     } else {
-                        //console.log(`jewel [${this.jewel.id}] >> property`, matchingProperty);
-                        let countryAndArea = helper.getCountryAndArea(matchingProperty);
+                        let countryAndArea = helper.getCountryAndArea(this.propertyInfo);
                         if (!helper.isAvailable(countryAndArea)) {
-                            console.warn(`No matching area/country for property`, matchingProperty);
+                            console.warn(`No matching area/country for property`, this.propertyInfo);
                         } else {
                             this.area = countryAndArea.area;
                             this.country = countryAndArea.country;
                         }
 
-                        this.propertyId = matchingProperty.id;
-                        this.link = `https://app.earth2.io/#propertyInfo/${matchingProperty.id}`;
-                        this.description = matchingProperty.description;
-                        this.location = matchingProperty.location.split(",").map(l => l.trim()).reverse().join(" | ").replace(`${this.country} | `, "");
-
-                        this.tileClass = matchingProperty.tileClass;
-                        this.tileCount = matchingProperty.tileCount;
+                        this.ownSpawn = this.propertyInfo.owner.id === window.auth0user.id;
+                        this.tileClass = this.propertyInfo.tileClass;
+                        this.tileCount = this.propertyInfo.tileCount;
                     }
+
+                    this.propertyId = this.jewel.landfield.id;
+                    this.link = `https://app.earth2.io/#propertyInfo/${this.jewel.landfield.id}`;
+                    this.description = helper.cleanString(this.jewel.landfield.description);
+                    this.location = this.jewel.landfield.location.split(",").map(l => l.trim()).reverse().join(" | ").replace(`${this.country} | `, "");
 
                     this.color = JewelData.getColorName(this.jewel.color);
                     //this.effect = JewelData.getEffect(this.jewel.size, this.color);
@@ -735,7 +910,8 @@
                     this.size = JewelData.getSize(this.jewel.size);
                     this.tier = this.jewel.tier;
 
-                    this.center = this.jewel.landfield.center;
+                    this.center = this.jewel.landfield.center.replace("(", "").replace(")", "").replace(", ", " ").replace(" ", " | ");
+
                 }
             }
         }
@@ -748,7 +924,7 @@
             this.userProperties = userProperties;
         }
 
-        generateReport (includeSummary, includeSummaryDaily) {
+        generateReport(includeSummary, includeSummaryDaily) {
             console.log(`generate report summary [${includeSummary}] daily [${includeSummaryDaily}]`);
 
             let result = "";
@@ -774,7 +950,7 @@
             }
 
 
-            let csvHarvestHeader = `,Nr,Spawned at, Size, Tier, Production, Country, Location, Property description, Class, Tile count,# of jewels, center, link`;
+            let csvHarvestHeader = `,Nr,Spawned at, Size, Tier, Production, Country, Location, Property description, Class, Tile count,# of jewels, center, link, 3rd party`;
 
             let dates = [...new Set(this.reportItems.map(m => m.spawnDate))];
 
@@ -791,8 +967,9 @@
                 });
 
                 if (i === 0) {
-                    result += (includeSummaryDaily ? "," : "") + csvHarvestHeader;
+                    result += csvHarvestHeader;
                 }
+
                 result += `${Strings.NEWLINE}[${date}]`;
                 result += this.getJewelCSVForDate(reportItemsForDate, includeSummaryDaily);
 
@@ -838,15 +1015,18 @@
             return helper.createDownloadFile("crystal-report", result);
         }
 
-        getJewelCSVForDate (reportItemsForDate) {
+        getJewelCSVForDate(reportItemsForDate) {
             let result = "";
             reportItemsForDate.forEach((ri, index) => { result += this.getAsCSVString(ri, index, index !== reportItemsForDate.length - 1); });
             return result;
         }
 
-        getAsCSVString (reportItem, index, addNewLine) {
+        getAsCSVString(reportItem, index, addNewLine) {
             let jewelData = `${reportItem.spawnDateTime},${reportItem.size},${reportItem.tier},${reportItem.affectedProduction}`;
-            let propertyData = `${reportItem.country},${reportItem.location},${helper.cleanString(reportItem.description)},${reportItem.tileClass},${reportItem.tileCount},${reportItem.jewelCount},${reportItem.center},${reportItem.link}`;
+            let thirdPartyName = reportItem.ownSpawn === false ? reportItem.propertyInfo.owner.username : "";
+            let thirdPartyLink = thirdPartyName === "" ? "" : `https://app.earth2.io/#profile/${reportItem.propertyInfo.owner.id}`;
+            let thirdParty = `${thirdPartyName},${thirdPartyLink}`;
+            let propertyData = `${reportItem.country},${reportItem.location},${helper.cleanString(reportItem.description)},${reportItem.tileClass},${reportItem.tileCount},${reportItem.jewelCount},${reportItem.center},${reportItem.link},${thirdParty}`;
             let result = `,${index + 1},${jewelData},${propertyData}`;
             if (addNewLine) {
                 result += Strings.NEWLINE;
@@ -888,7 +1068,6 @@
     }
 
 })();
-
 
 
 
