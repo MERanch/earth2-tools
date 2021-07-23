@@ -430,6 +430,10 @@
 
             return result;
         }
+
+        async sleep(ms) {
+            await new Promise(r => setTimeout(r, ms));
+        }
     }
 
     let helper = new Helper();
@@ -447,6 +451,7 @@
 
 
             while (pageData.next != null) {
+                await helper.sleep(128);
                 pageData = await this.fetchJson(pageData.next.replace("https://app.earth2.io", ""));
                 result = result.concat(pageData.results);
             }
@@ -731,6 +736,7 @@
                 for (let i = 0; i < allPropertyIds.length; i++) {
                     let propertyId = allPropertyIds[i];
                     console.log(`processing ${i + 1}/${allPropertyIds.length} related property`);
+                    await helper.sleep(255);
                     jewelProperties.push(await api.getPropertyInfoShort(propertyId));
                 }
 
@@ -1022,7 +1028,8 @@
         }
 
         getAsCSVString(reportItem, index, addNewLine) {
-            let jewelData = `${reportItem.spawnDateTime},${reportItem.size},${reportItem.tier},${reportItem.affectedProduction}`;
+            let dateFormatted = reportItem.spawnDate.split("/").reverse().join("-") + " " + reportItem.spawnTime;
+            let jewelData = `${dateFormatted},${reportItem.size},${reportItem.tier},${reportItem.affectedProduction}`;
             let thirdPartyName = reportItem.ownSpawn === false ? reportItem.propertyInfo.owner.username : "";
             let thirdPartyLink = thirdPartyName === "" ? "" : `https://app.earth2.io/#profile/${reportItem.propertyInfo.owner.id}`;
             let thirdParty = `${thirdPartyName},${thirdPartyLink}`;
