@@ -34,8 +34,8 @@ let result = await fetch('/graphql', {
     console.log("fetch error in handleEditSellClick", error);
 });
 
-
-// Step 1 ) Copy the script above into notepad
+// Step 0) Go and view the property on the map
+// Step 1) Copy the script above into notepad
 // Step 2) Get a correct location string. For that simply click a tile next to your property, and copy the location (like "Leopoldstadt, Vienna, Austria"), above replace LOCATION_HERE with that.
 // Fill out the other values (DESCRIPTION_HERE,PROPERTY_ID_HERE using the current values). You can change the for sale price, flag for forsale as you want :)
 // Open your dev.console, copy paste the modified script and press enter.
