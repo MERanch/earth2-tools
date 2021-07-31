@@ -24,9 +24,11 @@ query = query
     .replace("#PROPERTYID#", "PROPERTY_ID_HERE");
 let actualQuery = JSON.stringify({ "query": query });
 
+let csrfToken = await cookieStore.get('csrftoken').then(r => r);
+
 let result = await fetch('/graphql', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', "X-CSRFToken": Cookies.get('csrftoken') },
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', "X-CSRFToken": csrfToken },
     body: actualQuery
 }).then(r => { return r.text(); }).then(data => {
     console.log("data: ",data);
