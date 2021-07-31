@@ -608,6 +608,9 @@
         }
 
         async getPropertyInfoShort (propertyId) {
+
+
+
             let query = `{
                 getLandfieldDetail(landfieldId: "#LANDID#") {
                     id,
@@ -645,7 +648,7 @@
                 return result;
 
             }).catch((error) => {
-                console.log("fetch error in cacheproperties (getUserLandfieldPage)", error);
+                console.log("fetch error in (getPropertyInfoShort)", error);
             });
 
             return properties;
@@ -700,12 +703,12 @@
                                 <input type="checkbox" id="include-summary" name="include-summary" value="" checked style="position:relative;opacity:unset;pointer-events:unset;">
                                 <label for="include-summary">Include summary (total)</label>
                             </div>
-
+                            
                             <div style="width:100%;">
                                 <input type="checkbox" id="include-summary-daily" name="include-summary-daily" value="" style="position:relative;opacity:unset;pointer-events:unset;">
                                 <label for="include-summary-daily">Include summary (daily)</label>
                             </div>
-
+                            
                             <div style="width:100%;">
                                 <input type="checkbox" id="exclude-bazaar" name="exclude-bazaar" value="" style="position:relative;opacity:unset;pointer-events:unset;">
                                 <label for="exclude-bazaar">Exclude bazaar purchases</label><br>
@@ -994,11 +997,11 @@
 
                 propertiesThatGeneratedJewels.forEach(propertyId => {
                     let jewelsByProperty = reportItemsForDate.filter(ri => ri.propertyId === propertyId);
-                    jewelsByProperty.forEach(ri => {
+                    jewelsByProperty.forEach(ri => { 
                         ri.jewelCount = jewelsByProperty.length;
-                        if(ri.jewelCount === undefined){
+                        if(!helper.isAvailable(ri.jewelCount)){
                             ri.jewelCount = Strings.NOTAVAILABLE;
-                        }
+                        } 
                     });
                 });
 
@@ -1069,7 +1072,8 @@
             let thirdPartyName = reportItem.ownSpawn === false ? reportItem.propertyInfo.owner.username : "";
             let thirdPartyLink = thirdPartyName === "" ? "" : `https://app.earth2.io/#profile/${reportItem.propertyInfo.owner.id}`;
             let thirdParty = `${thirdPartyName},${thirdPartyLink}`;
-            let propertyData = `${reportItem.country},${reportItem.location},${helper.cleanString(reportItem.description)},${reportItem.tileClass},${reportItem.tileCount},${reportItem.jewelCount},${reportItem.center},${reportItem.link},${thirdParty}`;
+            let jewelCount = helper.isAvailable(reportItem.jewelCount) ? reportItem.jewelCount : Strings.NOTAVAILABLE;
+            let propertyData = `${reportItem.country},${reportItem.location},${helper.cleanString(reportItem.description)},${reportItem.tileClass},${reportItem.tileCount},${jewelCount},${reportItem.center},${reportItem.link},${thirdParty}`;
             let result = `,${index + 1},${jewelData},${propertyData}`;
             if (addNewLine) {
                 result += Strings.NEWLINE;
