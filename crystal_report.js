@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Crystal/jewel export for earth2.io
 // @namespace    http://earth2.io/
-// @version      0.1.5
-// @description  Generate a csv report for your jewels with daily distribution | ordered by spawn date and time 
+// @version      0.1.6
+// @description  Generate a csv report for your jewels with daily distribution | ordered by spawn date and time
 // @author       Mihaly Szolnoki -> E2: mihajₒMSZY5BLXAP -> discord: mihaj#5170
 // @match        https://app.earth2.io/*
 // @grant        none
 // @license MIT
-// @currentversion	0.1.5 : adjusted for bazaar, fixed some incorrect areas in mapping | NOTE: Only lists currently owned jewels in your inventory, not those you sold!
+// @currentversion	0.1.6 : added option to exclude bought jewels from the list. Fixed summary to only include own jewels, not those bought from bazaar
 // ==/UserScript==
 
 /* jshint esversion: 8 */
@@ -317,9 +317,9 @@
             ]);
         }
 
-        isAvailable(object) { return typeof object !== "undefined" && object !== null && object !== ""; };
+        isAvailable (object) { return typeof object !== "undefined" && object !== null && object !== ""; };
 
-        tryParseJSON(data) {
+        tryParseJSON (data) {
             try {
                 let result = JSON.parse(data);
                 return result;
@@ -329,7 +329,7 @@
             }
         };
 
-        cleanString(input) {
+        cleanString (input) {
             let output = "";
             if (this.isAvailable(input)) {
                 for (var i = 0; i < input.length; i++) {
@@ -342,7 +342,7 @@
             return output;
         };
 
-        getFormattedTime(getDateToo) {
+        getFormattedTime (getDateToo) {
             let now = new Date();
 
             let hours = now.getHours().toString().padStart(2, '0');
@@ -360,7 +360,7 @@
             return result;
         };
 
-        createDownloadFile(prefix, content) {
+        createDownloadFile (prefix, content) {
             let link = document.createElement('a');
             link.download = `${prefix}-${this.getFormattedTime(true).replaceAll(":", "_")}.csv`;
             let blob = new File(["\uFEFF" + content], { type: 'text/csv;charset=utf-8' }); //"\uFEFF" to ensure correct encoding
@@ -370,7 +370,7 @@
             }
         }
 
-        showCustomToast(severity, message, dismissOthers) {
+        showCustomToast (severity, message, dismissOthers) {
             try {
                 console.log(`[${severity}] : ${message}`);
 
@@ -397,7 +397,7 @@
             }
         }
 
-        getCountryAndArea(property) {
+        getCountryAndArea (property) {
             let result = null;
             try {
 
@@ -431,7 +431,7 @@
             return result;
         }
 
-        async sleep(ms) {
+        async sleep (ms) {
             await new Promise(r => setTimeout(r, ms));
         }
     }
@@ -478,7 +478,7 @@
             return csrfToken;
         }
 
-        async getUserLandFields() {
+        async getUserLandFields () {
             let success = false;
             try {
                 let properties = await this.getUserLandFieldsAll();
@@ -500,7 +500,7 @@
             }
         }
 
-        async getUserLandFieldsAll() {
+        async getUserLandFieldsAll () {
             let csrfToken = await this.getCSRFToken();
 
             let query =
@@ -540,11 +540,11 @@
             return properties;
         }
 
-        async getUserLandFieldsPaged(userId) {
+        async getUserLandFieldsPaged (userId) {
             let itemsPerPage = 1024;
             let query = `{
                 getUserLandfields(userId: "${userId}", page: ##, items: ${itemsPerPage}) {
-                    count,        
+                    count,
                     landfields {
                         id, forSale, thumbnail, description, location, center, country, tileCount, tileClass, purchasedStr, purchasedTimestamp, purchaseValue, currentValue, tradingValue, price, transactionSet{ price, time }
                     }
@@ -573,7 +573,7 @@
             return result;
         }
 
-        async getUserLandfieldPage(query, pageNumber, pageCount) {
+        async getUserLandfieldPage (query, pageNumber, pageCount) {
             if (helper.isAvailable(pageCount)) {
                 //console.log(`query page ${pageNumber} / ${pageCount}`);
                 helper.showCustomToast(MessageSeverity.SUCCESS, `query page ${pageNumber} / ${pageCount}`);
@@ -607,7 +607,7 @@
             return properties;
         }
 
-        async getPropertyInfoShort(propertyId) {
+        async getPropertyInfoShort (propertyId) {
             let query = `{
                 getLandfieldDetail(landfieldId: "#LANDID#") {
                     id,
@@ -651,7 +651,7 @@
             return properties;
         }
 
-        setCustomProperties(properties) {
+        setCustomProperties (properties) {
             properties.forEach(p => {
                 let lastTransactionDate = p.transactionSet.map(tr => new Date(tr.time)).sort((a, b) => a < b)[0];
                 p.purchasedDate = lastTransactionDate;
@@ -676,11 +676,11 @@
             this.crystalExportSelector = "#crystal-export";
         }
 
-        isResourcesPage() {
+        isResourcesPage () {
             return window.location.hash.includes("resources");
         }
 
-        init() {
+        init () {
             if (this.isResourcesPage()) {
                 let divs = Array.from(document.querySelectorAll("div"));
                 let inventoryLabel = null;
@@ -694,12 +694,22 @@
                 if (inventoryLabel != null) {
                     let inventory = inventoryLabel.parentElement.parentElement;
                     let html = `
-                    <div style="width:100%;height:50px;background:#f0f0f0;">
-                        <div style="display:flex; justify-content:space-evenly;">
-                            <input type="checkbox" id="include-summary" name="include-summary" value="" checked style="position:relative;opacity:unset;pointer-events:unset;">
-                            <label for="include-summary">Include summary (total)</label><br>
-                            <input type="checkbox" id="include-summary-daily" name="include-summary-daily" value="" style="position:relative;opacity:unset;pointer-events:unset;">
-                            <label for="include-summary-daily">Include summary (daily)</label><br>
+                    <div style="width:100%;height:69px;background:#f0f0f0;">
+                        <div style="display:flex; flex-flow:row; justify-content:space-evenly;">
+                            <div style="width:100%;">
+                                <input type="checkbox" id="include-summary" name="include-summary" value="" checked style="position:relative;opacity:unset;pointer-events:unset;">
+                                <label for="include-summary">Include summary (total)</label>
+                            </div>
+
+                            <div style="width:100%;">
+                                <input type="checkbox" id="include-summary-daily" name="include-summary-daily" value="" style="position:relative;opacity:unset;pointer-events:unset;">
+                                <label for="include-summary-daily">Include summary (daily)</label>
+                            </div>
+
+                            <div style="width:100%;">
+                                <input type="checkbox" id="exclude-bazaar" name="exclude-bazaar" value="" style="position:relative;opacity:unset;pointer-events:unset;">
+                                <label for="exclude-bazaar">Exclude bazaar purchases</label><br>
+                            </div>
                         </div>
                         <button id="crystal-report-export" style="width:100%">Export (csv)</button>
                     </div`;
@@ -712,7 +722,7 @@
             }
         }
 
-        async handleExportClick() {
+        async handleExportClick () {
             console.log("export click");
 
             let api = new E2API();
@@ -731,11 +741,19 @@
 
                 let allPropertyIds = [... new Set(jewels.map(m => m.landfield.id))];
                 //console.log(`all property ids: `, allPropertyIds);
+                helper.showCustomToast(MessageSeverity.WARNING, `Processing ${allPropertyIds.length} related properties`)
 
                 let jewelProperties = [];
+                let lastPercentage = 0;
                 for (let i = 0; i < allPropertyIds.length; i++) {
                     let propertyId = allPropertyIds[i];
-                    console.log(`processing ${i + 1}/${allPropertyIds.length} related property`);
+                    let percentage = Math.floor((parseFloat(i+1)) / (parseFloat(allPropertyIds.length))*100);
+                    console.log(`processing ${i + 1}/${allPropertyIds.length} [${Math.floor(percentage)}%] related property`);
+                    if( percentage !== lastPercentage && (percentage %5) === 0){
+                        helper.showCustomToast(MessageSeverity.SUCCESS, `[${percentage}%] done (${i+1} / ${allPropertyIds.length}) `, true);
+                        lastPercentage = percentage;
+                    }
+
                     await helper.sleep(255);
                     jewelProperties.push(await api.getPropertyInfoShort(propertyId));
                 }
@@ -753,7 +771,11 @@
                 //console.table(reportItems);
 
                 let reportExport = new ReportExport(reportItems, userProperties);
-                reportExport.generateReport(document.querySelector("#include-summary").checked, document.querySelector("#include-summary-daily").checked);
+                reportExport.generateReport(
+                    document.querySelector("#include-summary").checked,
+                    document.querySelector("#include-summary-daily").checked,
+                    document.querySelector("#exclude-bazaar").checked,
+                );
             }
         }
     }
@@ -855,7 +877,7 @@
             this.init();
         }
 
-        initDefault() {
+        initDefault () {
             this.area = Strings.NOTAVAILABLE;
             this.country = Strings.NOTAVAILABLE;
             this.link = Strings.NOTAVAILABLE;
@@ -872,7 +894,7 @@
             this.ownSpawn = Strings.NOTAVAILABLE;
         }
 
-        init() {
+        init () {
 
             let jewel = this.jewel;
             if (!helper.isAvailable(jewel)) {
@@ -928,22 +950,24 @@
         constructor(reportItems, userProperties) {
             this.reportItems = reportItems;
             this.userProperties = userProperties;
+            this.userPropertyIds = userProperties.map(m => m.id);
         }
 
-        generateReport(includeSummary, includeSummaryDaily) {
+        generateReport (includeSummary, includeSummaryDaily, excludeBazaar) {
             console.log(`generate report summary [${includeSummary}] daily [${includeSummaryDaily}]`);
 
             let result = "";
             result += `If you want to thank me:${Strings.NEWLINE}use my code: MSZY5BLXAP${Strings.NEWLINE}or https://www.buymeacoffee.com/mihaj${Strings.NEWLINE}or Paypal (csimbum@gmail.com)${Strings.NEWLINE}or just say hello in discord: mihaj#5170${Strings.NEWLINE}${Strings.NEWLINE}`;
 
             let propertiesThatGeneratedJewels = [...new Set(this.reportItems.map(m => m.propertyId))];
-
+            propertiesThatGeneratedJewels = propertiesThatGeneratedJewels.filter(p => this.userPropertyIds.includes(p));
 
 
             if (includeSummary) {
 
                 result += `Total jewel count:,${this.reportItems.length}${Strings.NEWLINE}`;
                 result += `Generated jewels:,${propertiesThatGeneratedJewels.length} properties out of ${this.userProperties.length}${Strings.NEWLINE}`;
+                result += `Bazaar total:,${this.reportItems.filter(ri => !ri.ownSpawn).length}`;
 
                 let luckyProperties = propertiesThatGeneratedJewels.map(propertyId => ({ propertyId: propertyId, jewelCount: this.reportItems.filter(ri => ri.propertyId === propertyId).length })).filter(res => res.jewelCount > 1);
                 if (luckyProperties.length > 0) {
@@ -966,18 +990,23 @@
                 console.log(`processing date [${date}]`);
                 let reportItemsForDate = this.reportItems.filter(ri => ri.spawnDate === date);
                 propertiesThatGeneratedJewels = [...new Set(reportItemsForDate.map(m => m.propertyId))];
+                propertiesThatGeneratedJewels = propertiesThatGeneratedJewels.filter(p => this.userPropertyIds.includes(p));
 
                 propertiesThatGeneratedJewels.forEach(propertyId => {
                     let jewelsByProperty = reportItemsForDate.filter(ri => ri.propertyId === propertyId);
-                    jewelsByProperty.forEach(ri => { ri.jewelCount = jewelsByProperty.length });
+                    jewelsByProperty.forEach(ri => {
+                        ri.jewelCount = jewelsByProperty.length;
+                        if(ri.jewelCount === undefined){
+                            ri.jewelCount = Strings.NOTAVAILABLE;
+                        }
+                    });
                 });
 
                 if (i === 0) {
                     result += csvHarvestHeader;
                 }
-
                 result += `${Strings.NEWLINE}[${date}]`;
-                result += this.getJewelCSVForDate(reportItemsForDate, includeSummaryDaily);
+                result += this.getJewelCSVForDate(reportItemsForDate, excludeBazaar);
 
 
             }
@@ -989,9 +1018,12 @@
                     console.log(`processing date [${date}]`);
                     let reportItemsForDate = this.reportItems.filter(ri => ri.spawnDate === date);
                     propertiesThatGeneratedJewels = [...new Set(reportItemsForDate.map(m => m.propertyId))];
+                    propertiesThatGeneratedJewels = propertiesThatGeneratedJewels.filter(p => this.userPropertyIds.includes(p));
+
                     result += `${Strings.NEWLINE}[${date}]`;
                     result += `${Strings.NEWLINE}Jewels:,${reportItemsForDate.length}${Strings.NEWLINE}`;
                     result += `generated:,${propertiesThatGeneratedJewels.length} properties out of ${this.userProperties.length}${Strings.NEWLINE}`;
+                    result += `3rd party spawned that date:,${reportItemsForDate.filter(ri => !ri.ownSpawn).length}`;
 
                     if (propertiesThatGeneratedJewels.length != reportItemsForDate.length) {
                         //there are properties that got more than one jewel
@@ -1021,13 +1053,17 @@
             return helper.createDownloadFile("crystal-report", result);
         }
 
-        getJewelCSVForDate(reportItemsForDate) {
+        getJewelCSVForDate (reportItemsForDate, excludeBazaar) {
             let result = "";
-            reportItemsForDate.forEach((ri, index) => { result += this.getAsCSVString(ri, index, index !== reportItemsForDate.length - 1); });
+            reportItemsForDate.forEach((ri, index) => {
+                if ((excludeBazaar && ri.ownSpawn) || !excludeBazaar) {
+                    result += this.getAsCSVString(ri, index, index !== reportItemsForDate.length - 1);
+                }
+            });
             return result;
         }
 
-        getAsCSVString(reportItem, index, addNewLine) {
+        getAsCSVString (reportItem, index, addNewLine) {
             let dateFormatted = reportItem.spawnDate.split("/").reverse().join("-") + " " + reportItem.spawnTime;
             let jewelData = `${dateFormatted},${reportItem.size},${reportItem.tier},${reportItem.affectedProduction}`;
             let thirdPartyName = reportItem.ownSpawn === false ? reportItem.propertyInfo.owner.username : "";
