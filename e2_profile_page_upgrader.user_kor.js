@@ -1056,10 +1056,10 @@
             ];
 
             this.newOrderTemplate = `
-                <div id ='${this.newOrderSelectId}' class="filter-dropdown">
+               <div id ='${this.newOrderSelectId}' class="filter-dropdown">
                     <button id="property-order-btn" class="filter-dropbtn"></button>
                     <div class="filter-dropdown-content">
-                          <a href="#" data-order="${this.newOrderFilters[0]}" >기본순 정렬</a>
+                        <a href="#" data-order="${this.newOrderFilters[0]}" >기본순 정렬</a>
                         <a href="#" data-order="${this.newOrderFilters[1]}" >구매날짜(최신구매순)</a>
                         <a href="#" data-order="${this.newOrderFilters[2]}" >구매날짜(최초구매순)</a>
                         <a href="#" data-order="${this.newOrderFilters[3]}" >현재가치(높은순)</a>
@@ -1131,8 +1131,12 @@
                 </div>
                 `;
 
-           this.additionalHtml = `
-                <div class="profile-mihaj">
+            this.propertyExportLinkTemplate = `
+                <div><a id="export-properties-csv" href="#"><span>엑셀 파일로 내려받기</span></a></div>
+                `;
+
+            this.additionalHtml = `
+               <div class="profile-mihaj">
                     <div class="profile-mihaj support-me"><span>개발자를 지원해주세요 (<ref-code>MSZY5BLXAP</ref-code>) or by tipping on Paypal (<tip-paypal>csimbum@gmail.com</tip-paypal>)</span></div>
                     <div class="profile-mihaj contact-me"><span>개발자 디스코드 아이디 -> discord: <discord>mihaj#5170</discord></span></div>
 <div class="profile-mihaj contact-me"><span>한글화 : 새벽이(INVESTOR CLUB and TALSA) -> discord: <discord>Daybreak#5428</discord></span></div>
