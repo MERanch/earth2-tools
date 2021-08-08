@@ -83,7 +83,7 @@
                 { code: "cf", area: Areas.AF, country: "Central African Republic" },
                 { code: "cg", area: Areas.AF, country: "Congo" },
                 { code: "ch", area: Areas.EU, country: "Switzerland" },
-                { code: "ci", area: Areas.AF, country: "Cote d'Ivoire" },
+                { code: "ci", area: Areas.AF, country: "Côte d'Ivoire" },
                 { code: "ck", area: Areas.OC, country: "Cook Islands" },
                 { code: "cl", area: Areas.AM, country: "Chile" },
                 { code: "cm", area: Areas.AF, country: "Cameroon" },
@@ -92,7 +92,7 @@
                 { code: "cr", area: Areas.AM, country: "Costa Rica" },
                 { code: "cu", area: Areas.AM, country: "Cuba" },
                 { code: "cv", area: Areas.AF, country: "Cape Verde" },
-                { code: "cw", area: Areas.AM, country: "Curacao" },
+                { code: "cw", area: Areas.AM, country: "Curaçao" },
                 { code: "cy", area: Areas.EU, country: "Cyprus" },
                 { code: "cz", area: Areas.EU, country: "Czech Republic" },
 
@@ -313,7 +313,7 @@
 
                 { code: "yt", area: Areas.AF, country: "Mayotte" },
                 { code: "nc", area: Areas.OC, country: "New Caledonia" },
-                { code: "re", area: Areas.AF, country: "Reunion" },
+                { code: "re", area: Areas.AF, country: "Réunion" },
                 { code: "pm", area: Areas.AM, country: "Saint Pierre and Miquelon" },
                 { code: "tk", area: Areas.OC, country: "Tokelau" },
                 { code: "wf", area: Areas.OC, country: "Wallis and Futuna" },
@@ -1059,17 +1059,17 @@
                 <div id ='${this.newOrderSelectId}' class="filter-dropdown">
                     <button id="property-order-btn" class="filter-dropbtn"></button>
                     <div class="filter-dropdown-content">
-                        <a href="#" data-order="${this.newOrderFilters[0]}" >±âº»¼ø Á¤·Ä</a>
-                        <a href="#" data-order="${this.newOrderFilters[1]}" >±¸¸Å³¯Â¥(ÃÖ½Å±¸¸Å¼ø)</a>
-                        <a href="#" data-order="${this.newOrderFilters[2]}" >±¸¸Å³¯Â¥(ÃÖÃÊ±¸¸Å¼ø)</a>
-                        <a href="#" data-order="${this.newOrderFilters[3]}" >ÇöÀç°¡Ä¡(³ôÀº¼ø)</a>
-                        <a href="#" data-order="${this.newOrderFilters[4]}" >ÇöÀç°¡Ä¡(³·Àº¼ø)</a>
-                        <a href="#" data-order="${this.newOrderFilters[5]}" >°¡Ä¡(»ó½Â¼ø)($) (desc)</a>
-                        <a href="#" data-order="${this.newOrderFilters[6]}" >°¡Ä¡(ÇÏ¶ô¼ø)($) (asc)</a>
-                        <a href="#" data-order="${this.newOrderFilters[7]}" >Å¸ÀÏ¼ö(¸¹Àº¼ø)</a>
-                        <a href="#" data-order="${this.newOrderFilters[8]}" >Å¸ÀÏ¼ö(ÀûÀº¼ø)</a>
-                        <a href="#" data-order="${this.newOrderFilters[9]}" >À§Ä¡¸í(Z-A)</a>
-                        <a href="#" data-order="${this.newOrderFilters[10]}" >À§Ä¡¸í(A-Z)</a>
+                          <a href="#" data-order="${this.newOrderFilters[0]}" >기본순 정렬</a>
+                        <a href="#" data-order="${this.newOrderFilters[1]}" >구매날짜(최신구매순)</a>
+                        <a href="#" data-order="${this.newOrderFilters[2]}" >구매날짜(최초구매순)</a>
+                        <a href="#" data-order="${this.newOrderFilters[3]}" >현재가치(높은순)</a>
+                        <a href="#" data-order="${this.newOrderFilters[4]}" >현재가치(낮은순)</a>
+                        <a href="#" data-order="${this.newOrderFilters[5]}" >가치(상승순)($) (desc)</a>
+                        <a href="#" data-order="${this.newOrderFilters[6]}" >가치(하락순)($) (asc)</a>
+                        <a href="#" data-order="${this.newOrderFilters[7]}" >타일수(많은순)</a>
+                        <a href="#" data-order="${this.newOrderFilters[8]}" >타일수(적은순)</a>
+                        <a href="#" data-order="${this.newOrderFilters[9]}" >위치명(Z-A)</a>
+                        <a href="#" data-order="${this.newOrderFilters[10]}" >위치명(A-Z)</a>
                     </div>
                 </div>
                 `;
@@ -1131,15 +1131,11 @@
                 </div>
                 `;
 
-            this.propertyExportLinkTemplate = `
-                <div><a id="export-properties-csv" href="#"><span>¿¢¼¿ ÆÄÀÏ·Î ³»·Á¹Þ±â</span></a></div>
-                `;
-
-            this.additionalHtml = `
+           this.additionalHtml = `
                 <div class="profile-mihaj">
-                    <div class="profile-mihaj support-me"><span>°³¹ßÀÚ¸¦ Áö¿øÇØÁÖ¼¼¿ä (<ref-code>MSZY5BLXAP</ref-code>) or by tipping on Paypal (<tip-paypal>csimbum@gmail.com</tip-paypal>)</span></div>
-                    <div class="profile-mihaj contact-me"><span>°³¹ßÀÚ µð½ºÄÚµå ¾ÆÀÌµð -> discord: <discord>mihaj#5170</discord></span></div>
-<div class="profile-mihaj contact-me"><span>ÇÑ±ÛÈ­ : »õº®ÀÌ(INVESTOR CLUB and TALSA) -> discord: <discord>Daybreak#5428</discord></span></div>
+                    <div class="profile-mihaj support-me"><span>개발자를 지원해주세요 (<ref-code>MSZY5BLXAP</ref-code>) or by tipping on Paypal (<tip-paypal>csimbum@gmail.com</tip-paypal>)</span></div>
+                    <div class="profile-mihaj contact-me"><span>개발자 디스코드 아이디 -> discord: <discord>mihaj#5170</discord></span></div>
+<div class="profile-mihaj contact-me"><span>한글화 : 새벽이(INVESTOR CLUB and TALSA) -> discord: <discord>Daybreak#5428</discord></span></div>
                 </div>
                 `;
 
