@@ -1137,7 +1137,7 @@
 
             this.additionalHtml = `
                <div class="profile-mihaj">
-                    <div class="profile-mihaj support-me"><span>개발자를 지원해주세요 (<ref-code>MSZY5BLXAP</ref-code>) or by tipping on Paypal (<tip-paypal>csimbum@gmail.com</tip-paypal>)</span></div>
+                    <div class="profile-mihaj support-me"><span>개발자를 지원해주세요 (<ref-code>MSZY5BLXAP</ref-code>) or Paypal (<tip-paypal>csimbum@gmail.com</tip-paypal>)</span></div>
                     <div class="profile-mihaj contact-me"><span>개발자 디스코드 아이디 -> discord: <discord>mihaj#5170</discord></span></div>
 <div class="profile-mihaj contact-me"><span>한글화 : 새벽이(INVESTOR CLUB and TALSA) -> discord: <discord>Daybreak#5428</discord></span></div>
                 </div>
