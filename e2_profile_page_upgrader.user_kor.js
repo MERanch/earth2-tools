@@ -1,303 +1,327 @@
 // ==UserScript==
 // @name         E2 (earth2.io) - extension - profile page
 // @namespace    http://earth2.io/
-// @version      1.0.2
+// @version      1.1.3
 // @description  Extending the current functionality with additional filters, ordering and view mode (list, normal) and added night mode style
 // @author       Mihaly Szolnoki -> E2: MihajA414 - MSZY5BLXAP -> discord: mihaj
 // @match        https://app.earth2.io/
 // @grant        none
-// @currentversion	1.0.2 : small bugfix for the case when user is already in the profile page and reloads it
+// @currentversion	1.1.3 : when viewing other profile pages you can get the same style/filters/ordering too. | Added Glasgow profit %
 // ==/UserScript==
 
 /* jshint esversion: 8 */
 
-(function() {
+(function () {
     'use strict';
+
+    let MessageSeverity = Object.freeze({
+        SUCCESS: "success",
+        WARNING: "warning",
+        ERROR: "error",
+    });
+
+    let Areas = Object.freeze({
+        EU: "Europe",
+        AF: "Africa",
+        AS: "Asia",
+        AM: "America",
+        AT: "Antarctica",
+        OC: "Oceania",
+    });
+
+    function onImageError (e) {
+        console.log("onImageError ", e);
+    }
+    window.onImageError = onImageError;
 
     class Helper {
         constructor() {
 
-            this.areas = ["Africa", "America", "Antarctica", "Asia", "Europe", "Oceania", "Other"]
+            this.areas = ["Africa", "America", "Antarctica", "Asia", "Europe", "Oceania", "Other"];
 
             this.mappings = [
                 { code: "__", country: "other (international)?" },
 
-                { code: "ad", area: "Europe", country: "Andorra" },
-                { code: "ae", area: "Africa", country: "Dubai" },
-                { code: "af", area: "Asia", country: "Afghanistan" },
-                { code: "ag", area: "America", country: "Antigua and Barbuda" },
-                { code: "ai", area: "America", country: "Anguilla" },
-                { code: "al", area: "Europe", country: "Albania" },
-                { code: "am", area: "Asia", country: "Armenia" },
-                { code: "ao", area: "Africa", country: "Angola" },
-                { code: "aq", area: "Antarctica", country: "Antarctica" },
-                { code: "ar", area: "America", country: "Argentina" },
-                { code: "as", area: "Oceania", country: "American Samoa" },
-                { code: "at", area: "Europe", country: "Austria" },
-                { code: "au", area: "Oceania", country: "Australia" },
-                { code: "aw", area: "America", country: "Aruba" },
-                { code: "az", area: "Asia", country: "Azerbaijan" },
+                { code: "ad", area: Areas.EU, country: "Andorra" },
+                { code: "ae", area: Areas.AF, country: "Dubai" },
+                { code: "af", area: Areas.AS, country: "Afghanistan" },
+                { code: "ag", area: Areas.AM, country: "Antigua and Barbuda" },
+                { code: "ai", area: Areas.AM, country: "Anguilla" },
+                { code: "al", area: Areas.EU, country: "Albania" },
+                { code: "am", area: Areas.AS, country: "Armenia" },
+                { code: "ao", area: Areas.AF, country: "Angola" },
+                { code: "aq", area: Areas.AT, country: "Antarctica" },
+                { code: "ar", area: Areas.AM, country: "Argentina" },
+                { code: "as", area: Areas.OC, country: "American Samoa" },
+                { code: "at", area: Areas.EU, country: "Austria" },
+                { code: "au", area: Areas.OC, country: "Australia" },
+                { code: "aw", area: Areas.AM, country: "Aruba" },
+                { code: "az", area: Areas.AS, country: "Azerbaijan" },
 
-                { code: "ba", area: "Europe", country: "Bosnia Herzegovina" },
-                { code: "bb", area: "America", country: "Barbados" },
-                { code: "bd", area: "Asia", country: "Bangladesh" },
-                { code: "be", area: "Europe", country: "Belgium" },
-                { code: "bf", area: "Africa", country: "Burkina Faso" },
-                { code: "bg", area: "Europe", country: "Bulgaria" },
-                { code: "bh", area: "Africa", country: "Bahrain" },
-                { code: "bi", area: "Africa", country: "Burundi" },
-                { code: "bj", area: "Africa", country: "Benin" },
-                { code: "bl", area: "America", country: "Saint Barthelemy" },
-                { code: "bm", area: "America", country: "Bermuda" },
-                { code: "bn", area: "Asia", country: "Brunei Darussalam" },
-                { code: "bo", area: "Africa", country: "Bolivia" },
-                { code: "br", area: "America", country: "Brazil" },
-                { code: "bs", area: "America", country: "Bahamas" },
-                { code: "bt", area: "Asia", country: "Bhutan" },
-                { code: "bw", area: "Africa", country: "Botswana" },
-                { code: "by", area: "Europe", country: "Belarus" },
-                { code: "bz", area: "America", country: "Belize" },
+                { code: "ba", area: Areas.EU, country: "Bosnia Herzegovina" },
+                { code: "bb", area: Areas.AM, country: "Barbados" },
+                { code: "bd", area: Areas.AS, country: "Bangladesh" },
+                { code: "be", area: Areas.EU, country: "Belgium" },
+                { code: "bf", area: Areas.AF, country: "Burkina Faso" },
+                { code: "bg", area: Areas.EU, country: "Bulgaria" },
+                { code: "bh", area: Areas.AF, country: "Bahrain" },
+                { code: "bi", area: Areas.AF, country: "Burundi" },
+                { code: "bj", area: Areas.AF, country: "Benin" },
+                { code: "bl", area: Areas.AM, country: "Saint Barthelemy" },
+                { code: "bm", area: Areas.AM, country: "Bermuda" },
+                { code: "bn", area: Areas.AS, country: "Brunei Darussalam" },
+                { code: "bo", area: Areas.AF, country: "Bolivia" },
+                { code: "br", area: Areas.AM, country: "Brazil" },
+                { code: "bs", area: Areas.AM, country: "Bahamas" },
+                { code: "bt", area: Areas.AS, country: "Bhutan" },
+                { code: "bw", area: Areas.AF, country: "Botswana" },
+                { code: "by", area: Areas.EU, country: "Belarus" },
+                { code: "bz", area: Areas.AM, country: "Belize" },
 
-                { code: "ca", area: "America", country: "Canada" },
-                { code: "cd", area: "Africa", country: "Democratic Republic of Congo" },
-                { code: "cf", area: "Africa", country: "Central African Republic" },
-                { code: "cg", area: "Africa", country: "Congo" },
-                { code: "ch", area: "Europe", country: "Switzerland" },
-                { code: "ci", area: "Africa", country: "C?te d'Ivoire" },
-                { code: "ck", area: "Oceania", country: "Cook Islands" },
-                { code: "cl", area: "America", country: "Chile" },
-                { code: "cm", area: "Africa", country: "Cameroon" },
-                { code: "cn", area: "Asia", country: "China" },
-                { code: "co", area: "America", country: "Colombia" },
-                { code: "cr", area: "America", country: "Costa Rica" },
-                { code: "cu", area: "America", country: "Cuba" },
-                { code: "cv", area: "Africa", country: "Cape Verde" },
-                { code: "cw", area: "America", country: "Cura?ao" },
-                { code: "cy", area: "Europe", country: "Cyprus" },
-                { code: "cz", area: "Europe", country: "Czech Republic" },
+                { code: "ca", area: Areas.AM, country: "Canada" },
+                { code: "cd", area: Areas.AF, country: "Democratic Republic of Congo" },
+                { code: "cf", area: Areas.AF, country: "Central African Republic" },
+                { code: "cg", area: Areas.AF, country: "Congo" },
+                { code: "ch", area: Areas.EU, country: "Switzerland" },
+                { code: "ci", area: Areas.AF, country: "Cote d'Ivoire" },
+                { code: "ck", area: Areas.OC, country: "Cook Islands" },
+                { code: "cl", area: Areas.AM, country: "Chile" },
+                { code: "cm", area: Areas.AF, country: "Cameroon" },
+                { code: "cn", area: Areas.AS, country: "China" },
+                { code: "co", area: Areas.AM, country: "Colombia" },
+                { code: "cr", area: Areas.AM, country: "Costa Rica" },
+                { code: "cu", area: Areas.AM, country: "Cuba" },
+                { code: "cv", area: Areas.AF, country: "Cape Verde" },
+                { code: "cw", area: Areas.AM, country: "Curacao" },
+                { code: "cy", area: Areas.EU, country: "Cyprus" },
+                { code: "cz", area: Areas.EU, country: "Czech Republic" },
 
-                { code: "de", area: "Europe", country: "Germany" },
-                { code: "dj", area: "Africa", country: "Djibouti" },
-                { code: "dk", area: "Europe", country: "Denmark" },
-                { code: "dm", area: "America", country: "Dominica" },
-                { code: "do", area: "America", country: "Dominican Republic" },
-                { code: "dz", area: "Africa", country: "Algeria" },
+                { code: "de", area: Areas.EU, country: "Germany" },
+                { code: "dj", area: Areas.AF, country: "Djibouti" },
+                { code: "dk", area: Areas.EU, country: "Denmark" },
+                { code: "dm", area: Areas.AM, country: "Dominica" },
+                { code: "do", area: Areas.AM, country: "Dominican Republic" },
+                { code: "dz", area: Areas.AF, country: "Algeria" },
 
-                { code: "ec", area: "America", country: "Ecuador" },
-                { code: "ee", area: "Europe", country: "Estonia" },
-                { code: "eg", area: "Africa", country: "Egypt" },
-                { code: "eh", area: "Africa", country: "Western Sahara" },
-                { code: "er", area: "Africa", country: "Eritrea" },
-                { code: "es", area: "Europe", country: "Spain" },
-                { code: "et", area: "Africa", country: "Ethiopia" },
+                { code: "ec", area: Areas.AM, country: "Ecuador" },
+                { code: "ee", area: Areas.EU, country: "Estonia" },
+                { code: "eg", area: Areas.AF, country: "Egypt" },
+                { code: "eh", area: Areas.AF, country: "Western Sahara" },
+                { code: "er", area: Areas.AF, country: "Eritrea" },
+                { code: "es", area: Areas.EU, country: "Spain" },
+                { code: "et", area: Areas.AF, country: "Ethiopia" },
 
-                { code: "fi", area: "Europe", country: "Finland" },
-                { code: "fj", area: "Oceania", country: "Fiji" },
-                { code: "fk", area: "America", country: "Falkland Islands" },
-                { code: "fm", area: "Oceania", country: "Micronesia" },
-                { code: "fo", area: "Europe", country: "Faroe" },
-                { code: "fr", area: "Europe", country: "France" },
+                { code: "fi", area: Areas.EU, country: "Finland" },
+                { code: "fj", area: Areas.OC, country: "Fiji" },
+                { code: "fk", area: Areas.AM, country: "Falkland Islands" },
+                { code: "fm", area: Areas.OC, country: "Micronesia" },
+                { code: "fo", area: Areas.EU, country: "Faroe" },
+                { code: "fr", area: Areas.EU, country: "France" },
 
-                { code: "ga", area: "Africa", country: "Gabon" },
-                { code: "gb", area: "Europe", country: "United Kingdom" },
-                { code: "gd", area: "America", country: "Grenada" },
-                { code: "ge", area: "Asia", country: "Georgia" },
-                { code: "gg", area: "Europe", country: "Guernsey" },
-                { code: "gh", area: "Africa", country: "Ghana" },
-                { code: "gi", area: "Europe", country: "Gibraltar" },
-                { code: "gl", area: "America", country: "Greenland" },
-                { code: "gm", area: "Africa", country: "Gambia" },
-                { code: "gn", area: "Africa", country: "Guinea" },
-                { code: "gq", area: "Africa", country: "Equatorial Guinea" },
-                { code: "gr", area: "Europe", country: "Greece" },
-                { code: "gs", area: "Antarctica", country: "South Georgia and the South Sandwich Islands" },
-                { code: "gt", area: "America", country: "Guatemala" },
-                { code: "gu", area: "Oceania", country: "Guam" },
-                { code: "gw", area: "Africa", country: "Guinea-Bissau" },
-                { code: "gy", area: "America", country: "Guyana" },
+                { code: "ga", area: Areas.AF, country: "Gabon" },
+                { code: "gb", area: Areas.EU, country: "United Kingdom" },
+                { code: "gd", area: Areas.AM, country: "Grenada" },
+                { code: "ge", area: Areas.AS, country: "Georgia" },
+                { code: "gg", area: Areas.EU, country: "Guernsey" },
+                { code: "gh", area: Areas.AF, country: "Ghana" },
+                { code: "gi", area: Areas.EU, country: "Gibraltar" },
+                { code: "gl", area: Areas.AM, country: "Greenland" },
+                { code: "gm", area: Areas.AF, country: "Gambia" },
+                { code: "gn", area: Areas.AF, country: "Guinea" },
+                { code: "gq", area: Areas.AF, country: "Equatorial Guinea" },
+                { code: "gr", area: Areas.EU, country: "Greece" },
+                { code: "gs", area: Areas.AT, country: "South Georgia and the South Sandwich Islands" },
+                { code: "gt", area: Areas.AM, country: "Guatemala" },
+                { code: "gu", area: Areas.OC, country: "Guam" },
+                { code: "gw", area: Areas.AF, country: "Guinea-Bissau" },
+                { code: "gy", area: Areas.AM, country: "Guyana" },
 
-                { code: "hk", area: "Asia", country: "Hong Kong" },
-                { code: "hm", area: "Antarctica", country: "Heard and McDonald Islands" },
-                { code: "hn", area: "America", country: "Honduras" },
-                { code: "hr", area: "Europe", country: "Croatia" },
-                { code: "ht", area: "America", country: "Haiti" },
-                { code: "hu", area: "Europe", country: "Hungary" },
+                { code: "hk", area: Areas.AS, country: "Hong Kong" },
+                { code: "hm", area: Areas.AT, country: "Heard and McDonald Islands" },
+                { code: "hn", area: Areas.AM, country: "Honduras" },
+                { code: "hr", area: Areas.EU, country: "Croatia" },
+                { code: "ht", area: Areas.AM, country: "Haiti" },
+                { code: "hu", area: Areas.EU, country: "Hungary" },
 
-                { code: "id", area: "Asia", country: "Indonesia" },
-                { code: "ie", area: "Europe", country: "Ireland" },
-                { code: "im", area: "Europe", country: "Isle of Man" },
-                { code: "in", area: "Asia", country: "India" },
-                { code: "io", area: "Asia", country: "British Indian Ocean Territory" },
-                { code: "is", area: "Europe", country: "Iceland" },
-                { code: "it", area: "Europe", country: "Italy" },
+                { code: "id", area: Areas.AS, country: "Indonesia" },
+                { code: "ie", area: Areas.EU, country: "Ireland" },
+                { code: "im", area: Areas.EU, country: "Isle of Man" },
+                { code: "in", area: Areas.AS, country: "India" },
+                { code: "io", area: Areas.AS, country: "British Indian Ocean Territory" },
+                { code: "is", area: Areas.EU, country: "Iceland" },
+                { code: "it", area: Areas.EU, country: "Italy" },
 
-                { code: "je", area: "Europe", country: "Jersey" },
-                { code: "jm", area: "America", country: "Jamaica" },
-                { code: "jo", area: "Asia", country: "Jordan" },
-                { code: "jp", area: "Asia", country: "Japan" },
+                { code: "je", area: Areas.EU, country: "Jersey" },
+                { code: "jm", area: Areas.AM, country: "Jamaica" },
+                { code: "jo", area: Areas.AS, country: "Jordan" },
+                { code: "jp", area: Areas.AS, country: "Japan" },
 
-                { code: "ke", area: "Africa", country: "Kenya" },
-                { code: "kg", area: "Asia", country: "Kyrgyzstan" },
-                { code: "kh", area: "Asia", country: "Cambodia" },
-                { code: "ki", area: "Oceania", country: "Kiribati" },
-                { code: "km", area: "Africa", country: "Comoros" },
-                { code: "kn", area: "America", country: "Saint Kitts and Nevis" },
-                { code: "kp", area: "Asia", country: "North Korea" },
-                { code: "kr", area: "Asia", country: "South Korea" },
-                { code: "kw", area: "Asia", country: "Kuwait" },
-                { code: "ky", area: "America", country: "Cayman Islands" },
-                { code: "kz", area: "Asia", country: "Kazakhstan" },
+                { code: "ke", area: Areas.AF, country: "Kenya" },
+                { code: "kg", area: Areas.AS, country: "Kyrgyzstan" },
+                { code: "kh", area: Areas.AS, country: "Cambodia" },
+                { code: "ki", area: Areas.OC, country: "Kiribati" },
+                { code: "km", area: Areas.AF, country: "Comoros" },
+                { code: "kn", area: Areas.AM, country: "Saint Kitts and Nevis" },
+                { code: "kp", area: Areas.AS, country: "North Korea" },
+                { code: "kr", area: Areas.AS, country: "South Korea" },
+                { code: "kw", area: Areas.AS, country: "Kuwait" },
+                { code: "ky", area: Areas.AM, country: "Cayman Islands" },
+                { code: "kz", area: Areas.AS, country: "Kazakhstan" },
 
-                { code: "la", area: "Asia", country: "Laos" },
-                { code: "lb", area: "Asia", country: "Lebanon" },
-                { code: "lc", area: "America", country: "Saint Lucia" },
-                { code: "li", area: "Europe", country: "Liechtenstein" },
-                { code: "lk", area: "Asia", country: "Sri Lanka" },
-                { code: "lr", area: "Africa", country: "Liberia" },
-                { code: "ls", area: "Africa", country: "Lesotho" },
-                { code: "lt", area: "Europe", country: "Lithuania" },
-                { code: "lu", area: "Europe", country: "Luxembourg" },
-                { code: "lv", area: "Europe", country: "Latvia" },
-                { code: "ly", area: "Africa", country: "Libya" },
+                { code: "la", area: Areas.AS, country: "Laos" },
+                { code: "lb", area: Areas.AS, country: "Lebanon" },
+                { code: "lc", area: Areas.AM, country: "Saint Lucia" },
+                { code: "li", area: Areas.EU, country: "Liechtenstein" },
+                { code: "lk", area: Areas.AS, country: "Sri Lanka" },
+                { code: "lr", area: Areas.AF, country: "Liberia" },
+                { code: "ls", area: Areas.AF, country: "Lesotho" },
+                { code: "lt", area: Areas.EU, country: "Lithuania" },
+                { code: "lu", area: Areas.EU, country: "Luxembourg" },
+                { code: "lv", area: Areas.EU, country: "Latvia" },
+                { code: "ly", area: Areas.AF, country: "Libya" },
 
-                { code: "ma", area: "Africa", country: "Morocco" },
-                { code: "mc", area: "Europe", country: "Monaco" },
-                { code: "md", area: "Europe", country: "Moldova" },
-                { code: "me", area: "Europe", country: "Montenegro" },
-                { code: "mf", area: "America", country: "Saint Martin" },
-                { code: "mg", area: "Africa", country: "Madagascar" },
-                { code: "mh", area: "Oceania", country: "Marshall Islands" },
-                { code: "mk", area: "Europe", country: "North Macedonia" },
-                { code: "ml", area: "Africa", country: "Mali" },
-                { code: "mm", area: "Asia", country: "Myanmar" },
-                { code: "mn", area: "Asia", country: "Mongolia" },
-                { code: "mo", area: "Asia", country: "Macau" },
-                { code: "mp", area: "Asia", country: "Northern Mariana Islands" },
-                { code: "mr", area: "Africa", country: "Mauritania" },
-                { code: "ms", area: "America", country: "Montserrat" },
-                { code: "mt", area: "Europe", country: "Malta" },
-                { code: "mu", area: "Africa", country: "Mauritius" },
-                { code: "mv", area: "Asia", country: "Maldives" },
-                { code: "mw", area: "Africa", country: "Malawi" },
-                { code: "mx", area: "America", country: "Mexico" },
-                { code: "my", area: "Asia", country: "Malaysia" },
-                { code: "mz", area: "Africa", country: "Mozambique" },
+                { code: "ma", area: Areas.AF, country: "Morocco" },
+                { code: "mc", area: Areas.EU, country: "Monaco" },
+                { code: "md", area: Areas.EU, country: "Moldova" },
+                { code: "me", area: Areas.EU, country: "Montenegro" },
+                { code: "mf", area: Areas.AM, country: "Saint Martin" },
+                { code: "mg", area: Areas.AF, country: "Madagascar" },
+                { code: "mh", area: Areas.OC, country: "Marshall Islands" },
+                { code: "mk", area: Areas.EU, country: "North Macedonia" },
+                { code: "ml", area: Areas.AF, country: "Mali" },
+                { code: "mm", area: Areas.AS, country: "Myanmar" },
+                { code: "mn", area: Areas.AS, country: "Mongolia" },
+                { code: "mo", area: Areas.AS, country: "Macau" },
+                { code: "mp", area: Areas.AS, country: "Northern Mariana Islands" },
+                { code: "mr", area: Areas.AF, country: "Mauritania" },
+                { code: "ms", area: Areas.AM, country: "Montserrat" },
+                { code: "mt", area: Areas.EU, country: "Malta" },
+                { code: "mu", area: Areas.AF, country: "Mauritius" },
+                { code: "mv", area: Areas.AS, country: "Maldives" },
+                { code: "mw", area: Areas.AF, country: "Malawi" },
+                { code: "mx", area: Areas.AM, country: "Mexico" },
+                { code: "my", area: Areas.AS, country: "Malaysia" },
+                { code: "mz", area: Areas.AF, country: "Mozambique" },
 
-                { code: "na", area: "Africa", country: "Namibia" },
-                { code: "ne", area: "Africa", country: "Niger" },
-                { code: "nf", area: "Oceania", country: "Norfolk Island" },
-                { code: "ng", area: "Africa", country: "Nigeria" },
-                { code: "ni", area: "America", country: "Nicaragua" },
-                { code: "nl", area: "Europe", country: "Netherlands" },
-                { code: "no", area: "Europe", country: "Norway" },
-                { code: "np", area: "Asia", country: "Nepal" },
-                { code: "nr", area: "Oceania", country: "Nauru" },
-                { code: "nu", area: "Oceania", country: "Niue" },
-                { code: "nz", area: "Oceania", country: "New Zealand" },
+                { code: "na", area: Areas.AF, country: "Namibia" },
+                { code: "ne", area: Areas.AF, country: "Niger" },
+                { code: "nf", area: Areas.OC, country: "Norfolk Island" },
+                { code: "ng", area: Areas.AF, country: "Nigeria" },
+                { code: "ni", area: Areas.AM, country: "Nicaragua" },
+                { code: "nl", area: Areas.EU, country: "Netherlands" },
+                { code: "no", area: Areas.EU, country: "Norway" },
+                { code: "np", area: Areas.AS, country: "Nepal" },
+                { code: "nr", area: Areas.OC, country: "Nauru" },
+                { code: "nu", area: Areas.OC, country: "Niue" },
+                { code: "nz", area: Areas.OC, country: "New Zealand" },
 
-                { code: "om", area: "Asia", country: "Oman" },
+                { code: "om", area: Areas.AS, country: "Oman" },
 
-                { code: "pa", area: "America", country: "Panama" },
-                { code: "pe", area: "America", country: "Peru" },
-                { code: "pf", area: "Oceania", country: "Polynesia" },
-                { code: "pg", area: "Oceania", country: "Papua New Guinea" },
-                { code: "ph", area: "Asia", country: "Philippines" },
-                { code: "pk", area: "Asia", country: "Pakistan" },
-                { code: "pl", area: "Europe", country: "Poland" },
-                { code: "pn", area: "Oceania", country: "Pitcairn" },
-                { code: "pr", area: "America", country: "Puerto Rico" },
-                { code: "ps", area: "Asia", country: "Palestinian Territories" },
-                { code: "pt", area: "Europe", country: "Portugal" },
-                { code: "pw", area: "Oceania", country: "Palau" },
-                { code: "py", area: "America", country: "Paraguay" },
+                { code: "pa", area: Areas.AM, country: "Panama" },
+                { code: "pe", area: Areas.AM, country: "Peru" },
+                { code: "pf", area: Areas.OC, country: "Polynesia" },
+                { code: "pg", area: Areas.OC, country: "Papua New Guinea" },
+                { code: "ph", area: Areas.AS, country: "Philippines" },
+                { code: "pk", area: Areas.AS, country: "Pakistan" },
+                { code: "pl", area: Areas.EU, country: "Poland" },
+                { code: "pn", area: Areas.OC, country: "Pitcairn" },
+                { code: "pr", area: Areas.AM, country: "Puerto Rico" },
+                { code: "ps", area: Areas.AS, country: "Palestinian Territories" },
+                { code: "pt", area: Areas.EU, country: "Portugal" },
+                { code: "pw", area: Areas.OC, country: "Palau" },
+                { code: "py", area: Areas.AM, country: "Paraguay" },
 
-                { code: "qa", area: "Asia", country: "Qatar" },
+                { code: "qa", area: Areas.AS, country: "Qatar" },
 
-                { code: "ro", area: "Europe", country: "Romania" },
-                { code: "rs", area: "Europe", country: "Serbia" },
-                { code: "ru", area: "Asia", country: "Russia" },
-                { code: "rw", area: "Africa", country: "Rwanda" },
+                { code: "ro", area: Areas.EU, country: "Romania" },
+                { code: "rs", area: Areas.EU, country: "Serbia" },
+                { code: "ru", area: Areas.AS, country: "Russia" },
+                { code: "rw", area: Areas.AF, country: "Rwanda" },
 
-                { code: "sb", area: "Oceania", country: "Solomon Islands" },
-                { code: "sc", area: "Africa", country: "Seychelles" },
-                { code: "sd", area: "Africa", country: "Sudan" },
-                { code: "se", area: "Europe", country: "Sweden" },
-                { code: "sg", area: "Asia", country: "Singapore" },
-                { code: "sh", area: "Africa", country: "Saint Helena" },
-                { code: "si", area: "Europe", country: "Slovenia" },
-                { code: "sj", area: "Europe", country: "Svalbard and Jan Mayen" },
-                { code: "sk", area: "Europe", country: "Slovakia" },
-                { code: "sl", area: "Africa", country: "Sierra Leone" },
-                { code: "sm", area: "Europe", country: "San Marino" },
-                { code: "sn", area: "Africa", country: "Senegal" },
-                { code: "so", area: "Africa", country: "Somalia" },
-                { code: "sr", area: "America", country: "Suriname" },
-                { code: "ss", area: "Africa", country: "South Sudan" },
-                { code: "st", area: "Africa", country: "Sao Tome and Principe" },
-                { code: "sv", area: "America", country: "El Salvador" },
-                { code: "sx", area: "America", country: "Little Bay, Sint Maarten" },
-                { code: "sy", area: "Asia", country: "Syria" },
-                { code: "sz", area: "Africa", country: "Eswatini" },
+                { code: "sb", area: Areas.OC, country: "Solomon Islands" },
+                { code: "sc", area: Areas.AF, country: "Seychelles" },
+                { code: "sd", area: Areas.AF, country: "Sudan" },
+                { code: "se", area: Areas.EU, country: "Sweden" },
+                { code: "sg", area: Areas.AS, country: "Singapore" },
+                { code: "sh", area: Areas.AF, country: "Saint Helena" },
+                { code: "si", area: Areas.EU, country: "Slovenia" },
+                { code: "sj", area: Areas.EU, country: "Svalbard and Jan Mayen" },
+                { code: "sk", area: Areas.EU, country: "Slovakia" },
+                { code: "sl", area: Areas.AF, country: "Sierra Leone" },
+                { code: "sm", area: Areas.EU, country: "San Marino" },
+                { code: "sn", area: Areas.AF, country: "Senegal" },
+                { code: "so", area: Areas.AF, country: "Somalia" },
+                { code: "sr", area: Areas.AM, country: "Suriname" },
+                { code: "ss", area: Areas.AF, country: "South Sudan" },
+                { code: "st", area: Areas.AF, country: "Sao Tome and Principe" },
+                { code: "sv", area: Areas.AM, country: "El Salvador" },
+                { code: "sx", area: Areas.AM, country: "Little Bay, Sint Maarten" },
+                { code: "sy", area: Areas.AS, country: "Syria" },
+                { code: "sz", area: Areas.AF, country: "Eswatini" },
 
-                { code: "tc", area: "America", country: "Turks and Caicos" },
-                { code: "td", area: "Africa", country: "Chad" },
-                { code: "tf", area: "Antarctica", country: "French Southern Territories" },
-                { code: "tg", area: "Africa", country: "Togo" },
-                { code: "th", area: "Asia", country: "Thailand" },
-                { code: "tj", area: "Asia", country: "Tajikistan" },
-                { code: "tl", area: "Asia", country: "Timor Leste" },
-                { code: "tm", area: "Asia", country: "Turkmenistan" },
-                { code: "tn", area: "Africa", country: "Tunisia" },
-                { code: "to", area: "Oceania", country: "Tonga" },
-                { code: "tr", area: "Asia", country: "Turkey" },
-                { code: "tt", area: "America", country: "Trinidad and Tobago" },
-                { code: "tv", area: "Oceania", country: "Tuvalu" },
-                { code: "tw", area: "Asia", country: "Taiwan" },
-                { code: "tz", area: "Africa", country: "Tanzania" },
+                { code: "tc", area: Areas.AM, country: "Turks and Caicos" },
+                { code: "td", area: Areas.AF, country: "Chad" },
+                { code: "tf", area: Areas.AT, country: "French Southern Territories" },
+                { code: "tg", area: Areas.AF, country: "Togo" },
+                { code: "th", area: Areas.AS, country: "Thailand" },
+                { code: "tj", area: Areas.AS, country: "Tajikistan" },
+                { code: "tl", area: Areas.AS, country: "Timor Leste" },
+                { code: "tm", area: Areas.AS, country: "Turkmenistan" },
+                { code: "tn", area: Areas.AF, country: "Tunisia" },
+                { code: "to", area: Areas.OC, country: "Tonga" },
+                { code: "tr", area: Areas.AS, country: "Turkey" },
+                { code: "tt", area: Areas.AM, country: "Trinidad and Tobago" },
+                { code: "tv", area: Areas.OC, country: "Tuvalu" },
+                { code: "tw", area: Areas.AS, country: "Taiwan" },
+                { code: "tz", area: Areas.AF, country: "Tanzania" },
 
-                { code: "ua", area: "Europe", country: "Ukraine" },
-                { code: "ug", area: "Africa", country: "Uganda" },
-                { code: "us", area: "America", country: "United States" },
-                { code: "um", area: "Oceania", country: "US Minor Outlying Islands" },
-                { code: "uy", area: "America", country: "Uruguay" },
-                { code: "uz", area: "Asia", country: "Uzbekistan" },
+                { code: "ua", area: Areas.EU, country: "Ukraine" },
+                { code: "ug", area: Areas.AF, country: "Uganda" },
+                { code: "us", area: Areas.AM, country: "United States" },
+                { code: "um", area: Areas.OC, country: "US Minor Outlying Islands" },
+                { code: "uy", area: Areas.AM, country: "Uruguay" },
+                { code: "uz", area: Areas.AS, country: "Uzbekistan" },
 
-                { code: "va", area: "Europe", country: "Vatican City" },
-                { code: "vc", area: "America", country: "Saint Vincent and the Grenadines" },
-                { code: "ve", area: "America", country: "Venezuela" },
-                { code: "vg", area: "America", country: "British Virgin Islands" },
-                { code: "vi", area: "America", country: "US Virgin Islands" },
-                { code: "vn", area: "Asia", country: "Vietnam" },
-                { code: "vu", area: "Oceania", country: "Vanuatu" },
+                { code: "va", area: Areas.EU, country: "Vatican City" },
+                { code: "vc", area: Areas.AM, country: "Saint Vincent and the Grenadines" },
+                { code: "ve", area: Areas.AM, country: "Venezuela" },
+                { code: "vg", area: Areas.AM, country: "British Virgin Islands" },
+                { code: "vi", area: Areas.AM, country: "US Virgin Islands" },
+                { code: "vn", area: Areas.AS, country: "Vietnam" },
+                { code: "vu", area: Areas.OC, country: "Vanuatu" },
 
-                { code: "ws", area: "Oceania", country: "Samoa" },
+                { code: "ws", area: Areas.OC, country: "Samoa" },
 
-                { code: "xx", area: "Asia", country: "Spratly Islands" },
-                { code: "xy", area: "Europe", country: "Sovereign Base Areas of Akrotiri and Dhekelia" },
+                { code: "xx", area: Areas.AS, country: "Spratly Islands" },
+                { code: "xy", area: Areas.EU, country: "Sovereign Base Areas of Akrotiri and Dhekelia" },
 
-                { code: "ye", area: "Asia", country: "Yemen" },
+                { code: "ye", area: Areas.AS, country: "Yemen" },
 
-                { code: "za", area: "Africa", country: "South Africa" },
-                { code: "zm", area: "Africa", country: "Zambia" },
-                { code: "zw", area: "Africa", country: "Zimbabwe" },
-
-                //----
-                { code: "united arab emirates", area: "Asia", country: "United Arab Emirates" },
-                { code: "mayotte", area: "Africa", country: "Mayotte" },
-                { code: "reunion", area: "Africa", country: "Reunion" },
-                { code: "martinique", area: "America", country: "Martinique" },
+                { code: "za", area: Areas.AF, country: "South Africa" },
+                { code: "zm", area: Areas.AF, country: "Zambia" },
+                { code: "zw", area: Areas.AF, country: "Zimbabwe" },
 
                 //----
-                { code: "gf", area: "America", country: "French Guiana" },
-                { code: "gp", area: "America", country: "Guadeloupe" },
+                { code: "united arab emirates", area: Areas.AS, country: "United Arab Emirates" },
+                { code: "mayotte", area: Areas.AF, country: "Mayotte" },
+                { code: "reunion", area: Areas.AF, country: "Reunion" },
+                { code: "martinique", area: Areas.AM, country: "Martinique" },
 
-                { code: "yt", area: "Africa", country: "Mayotte" },
-                { code: "nc", area: "Oceania", country: "New Caledonia" },
-                { code: "re", area: "Africa", country: "R?union" },
-                { code: "pm", area: "America", country: "Saint Pierre and Miquelon" },
-                { code: "tk", area: "Oceania", country: "Tokelau" },
-                { code: "wf", area: "Oceania", country: "Wallis and Futuna" },
+                //----
+                { code: "gf", area: Areas.AM, country: "French Guiana" },
+                { code: "gp", area: Areas.AM, country: "Guadeloupe" },
 
+                { code: "yt", area: Areas.AF, country: "Mayotte" },
+                { code: "nc", area: Areas.OC, country: "New Caledonia" },
+                { code: "re", area: Areas.AF, country: "Reunion" },
+                { code: "pm", area: Areas.AM, country: "Saint Pierre and Miquelon" },
+                { code: "tk", area: Areas.OC, country: "Tokelau" },
+                { code: "wf", area: Areas.OC, country: "Wallis and Futuna" },
+
+                //----
+                { code: "pf", area: Areas.AS, country: "Paracel Islands" },
+                { code: "fg", area: Areas.OC, country: "French Polynesia" },
+                { code: "kv", area: Areas.EU, country: "Kosovo" },
             ];
         }
 
@@ -366,9 +390,9 @@
 
                 let colorClass = "";
                 switch (severity) {
-                    case "success": colorClass = "green"; break;
-                    case "warning": colorClass = "yellow black-text"; break;
-                    case "error": colorClass = "red"; break;
+                    case MessageSeverity.SUCCESS: colorClass = "green"; break;
+                    case MessageSeverity.WARNING: colorClass = "yellow black-text"; break;
+                    case MessageSeverity.ERROR: colorClass = "red"; break;
                 }
 
                 M.toast({
@@ -401,17 +425,28 @@
                 result = null;
             }
 
-
-
             return result;
+        }
+
+        async getImageData (url) {
+            let img = new Image();
+            img.src = url;
+            await img.decode();
+            return img.naturalHeight > 0;
+        }
+
+        async sleep (ms) {
+            await new Promise(r => setTimeout(r, ms));
         }
     }
 
     let helper = new Helper();
 
     class E2API {
-        constructor() {
+        constructor(helperInstance) {
+            this.helper = helperInstance;
 
+            this.creditItemsPerPage = 100;
         }
 
         async getUser () {
@@ -425,17 +460,17 @@
             return csrfToken;
         }
 
-        async getUserLandFields() {
+        async getUserLandFields () {
             let csrfToken = await this.getCSRFToken();
 
             let query =
                 `{
-                    getMyLandfields {
-                        id, forSale, thumbnail, description, location, center, country, tileCount, tileClass, purchasedStr, purchasedTimestamp, purchaseValue, currentValue, tradingValue, price, transactionSet{
-                            price, time
+                        getMyLandfields {
+                            id, forSale, thumbnail, description, location, center, country, tileCount, tileClass, purchasedStr, purchasedTimestamp, purchaseValue, currentValue, tradingValue, systemValue, tilePrice, price, transactionSet{
+                                price, time
+                            }
                         }
-                    }
-                }`;
+                    }`;
 
             let actualQuery = JSON.stringify({ "query": query });
 
@@ -448,7 +483,7 @@
             }).then(data => {
                 //console.log("data: ", data);
 
-                let parsedData = helper.tryParseJSON(data);
+                let parsedData = this.helper.tryParseJSON(data);
                 if (parsedData != null) {
                     console.log("data: ", parsedData);
                     return parsedData.data.getMyLandfields;
@@ -457,14 +492,181 @@
                 return null;
 
             }).catch((error) => {
-                console.log("fetch error in cacheproperties", error);
+                console.log("fetch error in cacheproperties (getUserLandFields)", error);
+            });
+
+            this.setCustomProperties(properties);
+
+            return properties;
+        }
+
+        async getUserLandFieldsPaged (userId) {
+            let itemsPerPage = 512;
+            let firstPageData = await this.getUserLandfieldFirstPage(itemsPerPage, userId);
+            let query = firstPageData.query;
+
+            let firstPage = firstPageData.firstPage;
+            console.log("first page: ", firstPage);
+            let result = firstPage.landfields;
+
+            let totalCount = firstPage.count;
+            let pageCount = Math.ceil(totalCount / itemsPerPage);
+
+            console.log("total page count: " + pageCount);
+            for (let i = 2; i <= pageCount; i++) {
+                let pageData = await this.getUserLandfieldPage(query, i, pageCount);
+                if (!this.helper.isAvailable(pageData)) {
+                    throw new Error("error during fetch");
+                } else {
+                    result = result.concat(pageData.landfields);
+                }
+            }
+
+            this.setCustomProperties(result);
+
+            return result;
+        }
+
+        getPagedQueryBase (itemsPerPage, userId) {
+            let query = `{
+                    getUserLandfields(userId: "${userId}", page: ##, items: ${itemsPerPage}) {
+                        count,        
+                        landfields {
+                            id, forSale, thumbnail, description, location, center, country, tileCount, tileClass, purchasedStr, purchasedTimestamp, purchaseValue, currentValue, tradingValue, systemValue, tilePrice, price, transactionSet{ price, time }
+                        }
+                    }
+                }`;
+            return query;
+        }
+
+        async getUserLandfieldFirstPage (itemsPerPage, userId) {
+            let query = this.getPagedQueryBase(itemsPerPage, userId);
+            let firstPage = await this.getUserLandfieldPage(query, 1);
+            console.log("first page: ", firstPage);
+            return { firstPage: firstPage, query: query };
+        }
+
+        async getUserLandfieldPage (query, pageNumber, pageCount) {
+            if (helper.isAvailable(pageCount)) {
+                //console.log(`query page ${pageNumber} / ${pageCount}`);
+                helper.showCustomToast(MessageSeverity.SUCCESS, `query page ${pageNumber} / ${pageCount}`);
+            }
+
+            let actualQuery = JSON.stringify({ "query": query.replace("##", pageNumber) });
+
+            let csrfToken = await this.getCSRFToken();
+            let properties = await fetch('/graphql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', "x-csrftoken": csrfToken.value },
+                body: actualQuery
+            }).then(r => {
+                return r.text();
+            }).then(data => {
+                let result = null;
+                //console.log("data: ", data);
+
+                let parsedData = helper.tryParseJSON(data);
+                if (parsedData != null) {
+                    //console.log("data: ", parsedData);
+                    result = parsedData.data.getUserLandfields;
+                }
+
+                return result;
+
+            }).catch((error) => {
+                console.log("fetch error in cacheproperties (getUserLandfieldPage)", error);
             });
 
             return properties;
         }
+
+        async getCreditTransactionPage (pageNumber) {
+
+            let offset = (pageNumber - 1) * this.creditItemsPerPage;
+            let url = `/api/v2/my/balance_changes/?balance_change_type=CREDIT&limit=${this.creditItemsPerPage}&offset=${offset}`
+            const data = await fetch(url).then(r => r.json()).then(r => r);
+            //console.log(`data [${pageNumber}]: `, data);
+
+            return data;
+        }
+
+        async getAllCreditTransactions () {
+            let firstPageData = await this.getCreditTransactionPage(1);
+
+            if (!helper.isAvailable(firstPageData) || firstPageData == "") {
+                console.error("script fail, notify dev.");
+            } else {
+                window.transactions = firstPageData.results;
+            }
+
+            let totalCount = firstPageData.count;
+            let pageCount = Math.ceil(totalCount / this.itemsPerPage);
+
+            let failedPages = [];
+            for (let i = 1; i < pageCount; i++) {
+
+                let pageNumber = i + 1;
+
+                //console.log(`query page ${pageNumber - 1} / ${pageCount}`);
+                await helper.sleep(150);
+
+                //updateTransactionExportButtonText(`query page ${pageNumber-1} / ${pageCount}`);
+                let pageData = await this.getCreditTransactionPage(pageNumber);
+                if (helper.isAvailable(pageData)) {
+                    window.transactions = window.transactions.concat(pageData.results);
+                    //console.log(` transactions at page [${i}]`, pageData.results);
+                } else {
+                    failedPages.push(pageNumber);
+                }
+            }
+
+            if (failedPages.length > 0) {
+                const maxRetry = 30;
+                let retryCount = 0;
+                while (retryCount < maxRetry && failedPages.length > 0) {
+                    let currentPage = failedPages[0];
+                    //updateTransactionExportButtonText(` retry ${retryCount + 1}/${maxRetry} for page ${currentPage} / ${pageCount}`);
+
+                    let pageData = await this.getCreditTransactionPage(currentPage);
+                    if (helper.isAvailable(pageData)) {
+                        window.transactions = window.transactions.concat(pageData.results);
+
+                        retryCount = 0;
+                        failedPages.shift();
+                    } else {
+                        retryCount++;
+                    }
+                }
+            }
+
+            if (failedPages.length > 0) {
+                console.error("Error during export, please rerun script after reloading page");
+            } else {
+
+            }
+        }
+
+        setCustomProperties (properties) {
+            properties.forEach(p => {
+                let lastTransactionDate = p.transactionSet.map(tr => new Date(tr.time)).sort((a, b) => a < b)[0];
+                p.purchasedDate = lastTransactionDate;
+                let countryAndArea = this.helper.getCountryAndArea(p);
+                if (this.helper.isAvailable(countryAndArea)) {
+                    p.area = countryAndArea.area;
+                    p.country = countryAndArea.country;
+                } else {
+                    p.area = "Other";
+                    p.country = "";
+                }
+
+                p.valueIncreaseUSD = p.currentValue - p.purchaseValue;
+
+                //get the #tags
+            });
+        }
     }
 
-    let api = new E2API();
+    let api = new E2API(helper);
     //let userInfo = await api.getUser();
     // console.log("user ", userInfo);
 
@@ -503,282 +705,282 @@
 
         addFilterStyle () {
             let style = `
-                /* Style The Dropdown Button */
-                .filter-dropbtn {
-                    background-color: #279B86;
-                    color: white;
-                    padding: 16px;
-                    font-size: 16px;
-                    border: none;
-                    cursor: pointer;
-                }
-                /* The container <div> - needed to position the dropdown content */
-                .filter-dropdown {
-                    position: relative;
-                    display: inline-block;
-                }
-                .filter-dropbtn, .filter-dropdown, .filter-dropdown-content{
-                    min-width: 190px;
-                }
-                /* Dropdown Content (Hidden by Default) */
-                .filter-dropdown-content {
-                  display: none;
-                  position: absolute;
-                  background-color: #f9f9f9;
-                  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-                  z-index: 1;
-                }
-                .filter-dropdown-content.hide{
-                    display:none;
-                }
-                /* Links inside the dropdown */
-                .filter-dropdown-content a {
-                  color: black;
-                  padding: 12px 16px;
-                  text-decoration: none;
-                  display: block;
-                  background: burlywood;
-                  color: sienna;
-                }
-                /* Change color of dropdown links on hover */
-                .filter-dropdown-content a:hover {
-                    background-color: rgba(50,50,50,0.75);
-                    color: snow;
-                }
-                /* Show the dropdown menu on hover */
-                .filter-dropdown:hover .filter-dropdown-content {
+                    /* Style The Dropdown Button */
+                    .filter-dropbtn {
+                        background-color: #279B86;
+                        color: white;
+                        padding: 16px;
+                        font-size: 16px;
+                        border: none;
+                        cursor: pointer;
+                    }
+                    /* The container <div> - needed to position the dropdown content */
+                    .filter-dropdown {
+                        position: relative;
+                        display: inline-block;
+                    }
+                    .filter-dropbtn, .filter-dropdown, .filter-dropdown-content{
+                        min-width: 190px;
+                    }
+                    /* Dropdown Content (Hidden by Default) */
+                    .filter-dropdown-content {
+                    display: none;
+                    position: absolute;
+                    background-color: #f9f9f9;
+                    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                    z-index: 1;
+                    }
+                    .filter-dropdown-content.hide{
+                        display:none;
+                    }
+                    /* Links inside the dropdown */
+                    .filter-dropdown-content a {
+                    color: black;
+                    padding: 12px 16px;
+                    text-decoration: none;
                     display: block;
-                    top: -235px;
-                }
-                /* Change the background color of the dropdown button when the dropdown content is shown */
-                .filter-dropdown:hover .filter-dropbtn {
-                    background-color: #3e8e41;
-                }
-                #mihaj-order-dropdown {
-                    margin-right: 15px;
-                }
-            `;
+                    background: burlywood;
+                    color: sienna;
+                    }
+                    /* Change color of dropdown links on hover */
+                    .filter-dropdown-content a:hover {
+                        background-color: rgba(50,50,50,0.75);
+                        color: snow;
+                    }
+                    /* Show the dropdown menu on hover */
+                    .filter-dropdown:hover .filter-dropdown-content {
+                        display: block;
+                        top: -235px;
+                    }
+                    /* Change the background color of the dropdown button when the dropdown content is shown */
+                    .filter-dropdown:hover .filter-dropbtn {
+                        background-color: #3e8e41;
+                    }
+                    #mihaj-order-dropdown {
+                        margin-right: 15px;
+                    }
+                `;
             this.addStyle(style, "profile-filter");
         }
 
         addSwitchStyle () {
             let switchStyle = `
-                .display-switch-container{
-                    margin-top: 13px;
-                }
-                .display-switch-label{
-                    margin-right: 10px;
-                }
-                .display-switch {
-                    position: relative;
-                    display: inline-block;
-                    width: 60px;
-                    height: 34px;
-                    margin-right: 15px;
-                }
-                .display-switch input {
-                    opacity: 0;
-                    width: 0;
-                    height: 0;
-                }
-                display-switch .display-slider {
-                    position: absolute;
-                    cursor: pointer;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background-color: #ccc;
-                    -webkit-transition: .4s;
-                    transition: .4s;
-                }
-                display-switch .display-slider:before {
-                    position: absolute;
-                    content: "";
-                    height: 26px;
-                    width: 26px;
-                    left: 4px;
-                    bottom: 4px;
-                    background-color: white;
-                    -webkit-transition: .4s;
-                    transition: .4s;
-                }
-                .display-switch input:checked + span.display-slider {
-                    background-color: #279B86;
-                }
-                .display-switch input:focus + span.display-slider {
-                    box-shadow: 0 0 1px #279B86;
-                }
-                .display-switch input:checked + span.display-slider:before {
-                    -webkit-transform: translateX(30px);
-                    -ms-transform: translateX(30px);
-                    transform: translateX(30px);
-                    border-radius: 50%;
-                    left: 0;
-                }
-                /* Rounded sliders */
-                .display-slider.round {
-                    border-radius: 34px;
-                }
-                [type="checkbox"]+span.display-slider:not(.lever).round:before {
-                    border-radius: 50%;
-                }
-                [type="checkbox"]+span.display-slider:not(.lever){
-                    width: 50px;
-                    height:24px;
-                    background-color: dimgray;
-                    top: 6px;
-                }
-                [type="checkbox"]+span.display-slider:not(.lever):before{
-                    border: 7px solid snow;
-                    width: 18px;
-                    height: 18px;
-                    position:absolute;
-                    top: 0;
-                }
-                `;
+                    .display-switch-container{
+                        margin-top: 13px;
+                    }
+                    .display-switch-label{
+                        margin-right: 10px;
+                    }
+                    .display-switch {
+                        position: relative;
+                        display: inline-block;
+                        width: 60px;
+                        height: 34px;
+                        margin-right: 15px;
+                    }
+                    .display-switch input {
+                        opacity: 0;
+                        width: 0;
+                        height: 0;
+                    }
+                    display-switch .display-slider {
+                        position: absolute;
+                        cursor: pointer;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background-color: #ccc;
+                        -webkit-transition: .4s;
+                        transition: .4s;
+                    }
+                    display-switch .display-slider:before {
+                        position: absolute;
+                        content: "";
+                        height: 26px;
+                        width: 26px;
+                        left: 4px;
+                        bottom: 4px;
+                        background-color: white;
+                        -webkit-transition: .4s;
+                        transition: .4s;
+                    }
+                    .display-switch input:checked + span.display-slider {
+                        background-color: #279B86;
+                    }
+                    .display-switch input:focus + span.display-slider {
+                        box-shadow: 0 0 1px #279B86;
+                    }
+                    .display-switch input:checked + span.display-slider:before {
+                        -webkit-transform: translateX(30px);
+                        -ms-transform: translateX(30px);
+                        transform: translateX(30px);
+                        border-radius: 50%;
+                        left: 0;
+                    }
+                    /* Rounded sliders */
+                    .display-slider.round {
+                        border-radius: 34px;
+                    }
+                    [type="checkbox"]+span.display-slider:not(.lever).round:before {
+                        border-radius: 50%;
+                    }
+                    [type="checkbox"]+span.display-slider:not(.lever){
+                        width: 50px;
+                        height:24px;
+                        background-color: dimgray;
+                        top: 6px;
+                    }
+                    [type="checkbox"]+span.display-slider:not(.lever):before{
+                        border: 7px solid snow;
+                        width: 18px;
+                        height: 18px;
+                        position:absolute;
+                        top: 0;
+                    }
+                    `;
             this.addStyle(switchStyle, "profile-view-switch");
         }
 
         addPageStyle () {
             let pageStyle = `
-                .content-holder .profile.section{
-                    background-color: darkgray;
-                }
-                .content-holder .profile.section .settings-header{
-                    background-color: dimgray;
-                }
-                .profile .settings-content-holder b {
-                    color: snow;
-                }
-                .profile-mihaj{
-                    font-weight: normal;
-                    font-size: 16px;
-                }
-                .profile-mihaj ref-code,
-                .profile-mihaj tip-paypal,
-                .profile-mihaj discord{
-                    color: peachpuff;
-                }
-            `;
+                    .content-holder .profile.section{
+                        background-color: darkgray;
+                    }
+                    .content-holder .profile.section .settings-header{
+                        background-color: dimgray;
+                    }
+                    .profile .settings-content-holder b {
+                        color: snow;
+                    }
+                    .profile-mihaj{
+                        font-weight: normal;
+                        font-size: 16px;
+                    }
+                    .profile-mihaj ref-code,
+                    .profile-mihaj tip-paypal,
+                    .profile-mihaj discord{
+                        color: peachpuff;
+                    }
+                `;
             this.addStyle(pageStyle, "profile-page-style");
         }
 
         addCardStyle () {
             let cardStyle = `
-                .portfolio-content .card{
-                    background-color: dimgray;
-                    margin-bottom: 15px;
-                }
-                div.card-image{
-                    border: 1px solid burlywood;
-                }
-                .portfolio-content .card .card-content{
-                    padding-left: 10px;
-                    padding-right: 10px;
-                }
-                div.card-content .description{
-                    color: silver;
-                }
-                .portfolio-content .card .card-content .coordinates{
-                    margin-top: 0px;
-                }
-                .portfolio-content .card .card-content .location,
-                .portfolio-content .card .card-content .coordinates,
-                .portfolio-content .card .card-content .tilelass {
-                    color: snow;
-                }
-                .portfolio-content .card .card-content .price .trade-value{
-                    margin-left: 15px;
-                }
-                .portfolio-content .card .card-content .price .land-price,
-                .portfolio-content .card .card-content .price .tileclass {
-                    margin-left: 5px;
-                    position: absolute;
-                    right: 10px;
-                }
-                .portfolio-content .card .card-content .price .tileclass{
-                    color: darkorange;
-                }
-                .portfolio-content .card .card-content .price .land-price + .tileclass{
-                    bottom: 30px;
-                }
-                .col-lg-4.col-md-6.col-12{
-                    opacity: 1;
-                }
-                .col-lg-4.col-md-6.col-12:not(.list-view) .card{
-                    min-height: 404px;
-                }
-                .col-lg-4.col-md-6.col-12.list-view{
-                    max-width: unset;
-                    width: 100%;
-                    flex: unset;
-                }
-                .col-lg-4.col-md-6.col-12.list-view:nth-child(2n+1) .card{
-                    background-color: slategray;
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-image img{
-                    display:none;
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-content{
-                    padding-top: 5px;
-                    height: 100px;
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-content .price,
-                .col-lg-4.col-md-6.col-12.list-view .card-content .location,
-                .col-lg-4.col-md-6.col-12.list-view .card-content .coordinates{
-                    position:absolute;
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-content .price{
-                    top: 40px;
-                    width: 100%;
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-content .price .tileclass{
-                    left: 370px;
-                    right: unset;
-                    bottom: unset;
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-content .price .land-price{
-                    right: 23px;
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-content .location{
-                    top: 70px;
-                    left: 384px;
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-content .coordinates{
-                    top: 72px;
-                    padding-left: 0;
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-reveal .input-field,
-                .col-lg-4.col-md-6.col-12.list-view .card-reveal .checkbox-group{
-                    position: absolute;
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-reveal .input-field:nth-child(1){
-                    /*border: 1px solid red;*/
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-reveal .input-field:nth-child(2){
-                    display: none;
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-reveal .input-field:nth-child(3){
-                    /*border: 1px solid green;*/
-                    left: 333px;
-                }
-                .col-lg-4.col-md-6.col-12.list-view .card-reveal .checkbox-group{
-                    right: 0;
-                    top: 33px;
-                }
-            `;
+                    .portfolio-content .card{
+                        background-color: dimgray;
+                        margin-bottom: 15px;
+                    }
+                    div.card-image{
+                        border: 1px solid burlywood;
+                    }
+                    .portfolio-content .card .card-content{
+                        padding-left: 10px;
+                        padding-right: 10px;
+                    }
+                    div.card-content .description{
+                        color: silver;
+                    }
+                    .portfolio-content .card .card-content .coordinates{
+                        margin-top: 0px;
+                    }
+                    .portfolio-content .card .card-content .location,
+                    .portfolio-content .card .card-content .coordinates,
+                    .portfolio-content .card .card-content .tilelass {
+                        color: snow;
+                    }
+                    .portfolio-content .card .card-content .price .trade-value{
+                        margin-left: 15px;
+                    }
+                    .portfolio-content .card .card-content .price .land-price,
+                    .portfolio-content .card .card-content .price .tileclass {
+                        margin-left: 5px;
+                        position: absolute;
+                        right: 10px;
+                    }
+                    .portfolio-content .card .card-content .price .tileclass{
+                        color: darkorange;
+                    }
+                    .portfolio-content .card .card-content .price .land-price + .tileclass{
+                        bottom: 30px;
+                    }
+                    .col-lg-4.col-md-6.col-12{
+                        opacity: 1;
+                    }
+                    .col-lg-4.col-md-6.col-12:not(.list-view) .card{
+                        min-height: 404px;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view{
+                        max-width: unset;
+                        width: 100%;
+                        flex: unset;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view:nth-child(2n+1) .card{
+                        background-color: slategray;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-image img{
+                        display:none;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-content{
+                        padding-top: 5px;
+                        height: 100px;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-content .price,
+                    .col-lg-4.col-md-6.col-12.list-view .card-content .location,
+                    .col-lg-4.col-md-6.col-12.list-view .card-content .coordinates{
+                        position:absolute;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-content .price{
+                        top: 40px;
+                        width: 100%;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-content .price .tileclass{
+                        left: 370px;
+                        right: unset;
+                        bottom: unset;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-content .price .land-price{
+                        right: 23px;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-content .location{
+                        top: 70px;
+                        left: 384px;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-content .coordinates{
+                        top: 72px;
+                        padding-left: 0;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-reveal .input-field,
+                    .col-lg-4.col-md-6.col-12.list-view .card-reveal .checkbox-group{
+                        position: absolute;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-reveal .input-field:nth-child(1){
+                        /*border: 1px solid red;*/
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-reveal .input-field:nth-child(2){
+                        display: none;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-reveal .input-field:nth-child(3){
+                        /*border: 1px solid green;*/
+                        left: 333px;
+                    }
+                    .col-lg-4.col-md-6.col-12.list-view .card-reveal .checkbox-group{
+                        right: 0;
+                        top: 33px;
+                    }
+                `;
             this.addStyle(cardStyle, "profile-card-style");
         }
 
         addExportLinkStyle () {
             let style = `
-                #export-properties-csv{
-                    margin-right: 30px;
-                    position:relative;
-                    top:20px;
-                }
-            `;
+                    #export-properties-csv{
+                        margin-right: 30px;
+                        position:relative;
+                        top:20px;
+                    }
+                `;
             this.addStyle(style, "export-link-style");
         }
     }
@@ -786,7 +988,7 @@
     class profilePageUpgrader {
         constructor(helperInstance) {
             this.selector = "profile";
-            this.notifyDevMessage = "Notify dev -> discord: mihaj";
+            this.notifyDevMessage = "Notify dev -> discord: mihaj#5170";
             this.newTypeSelectId = "mihaj-type-filter";
 
             this.typeFilters = [
@@ -812,30 +1014,30 @@
             ];
 
             this.newSelectTemplate = `
-            <div id ='${this.newTypeSelectId}' class="filter-dropdown">
-                <button id="property-filter-btn" class="filter-dropbtn"></button>
-                <div class="filter-dropdown-content">
-                    <a href="#" data-filter="${this.typeFilters[0]}" >All owned</a>
-                    <a href="#" data-filter="${this.typeFilters[1]}" >For sale (all)</a>
-                    <a href="#" data-filter="${this.typeFilters[2]}" >Not for sale</a>
-                    <a href="#" data-filter="${this.typeFilters[3]}" >Class 1</a>
-                    <a href="#" data-filter="${this.typeFilters[4]}" >Class 1 (for sale)</a>
-                    <a href="#" data-filter="${this.typeFilters[5]}" >Class 2</a>
-                    <a href="#" data-filter="${this.typeFilters[6]}" >Class 2 (for sale)</a>
-                    <a href="#" data-filter="${this.typeFilters[7]}" >Class 3</a>
-                    <a href="#" data-filter="${this.typeFilters[8]}" >Class 3 (for sale)</a>
-                    <a href="#" data-filter="${this.typeFilters[9]}" >Class 4</a>
-                    <a href="#" data-filter="${this.typeFilters[10]}" >Class 4 (for sale)</a>
-                    <a href="#" data-filter="${this.typeFilters[11]}" >Area: Africa</a>
-                    <a href="#" data-filter="${this.typeFilters[12]}" >Area: America</a>
-                    <a href="#" data-filter="${this.typeFilters[13]}" >Area: Antarctica</a>
-                    <a href="#" data-filter="${this.typeFilters[14]}" >Area: Asia</a>
-                    <a href="#" data-filter="${this.typeFilters[15]}" >Area: Europe</a>
-                    <a href="#" data-filter="${this.typeFilters[16]}" >Area: Oceania</a>
-                    <a href="#" data-filter="${this.typeFilters[17]}" >Area: Other</a>
+                <div id ='${this.newTypeSelectId}' class="filter-dropdown">
+                    <button id="property-filter-btn" class="filter-dropbtn"></button>
+                    <div class="filter-dropdown-content">
+                        <a href="#" data-filter="${this.typeFilters[0]}" >All owned</a>
+                        <a href="#" data-filter="${this.typeFilters[1]}" >For sale (all)</a>
+                        <a href="#" data-filter="${this.typeFilters[2]}" >Not for sale</a>
+                        <a href="#" data-filter="${this.typeFilters[3]}" >Class 1</a>
+                        <a href="#" data-filter="${this.typeFilters[4]}" >Class 1 (for sale)</a>
+                        <a href="#" data-filter="${this.typeFilters[5]}" >Class 2</a>
+                        <a href="#" data-filter="${this.typeFilters[6]}" >Class 2 (for sale)</a>
+                        <a href="#" data-filter="${this.typeFilters[7]}" >Class 3</a>
+                        <a href="#" data-filter="${this.typeFilters[8]}" >Class 3 (for sale)</a>
+                        <a href="#" data-filter="${this.typeFilters[9]}" >Class 4</a>
+                        <a href="#" data-filter="${this.typeFilters[10]}" >Class 4 (for sale)</a>
+                        <a href="#" data-filter="${this.typeFilters[11]}" >Area: Africa</a>
+                        <a href="#" data-filter="${this.typeFilters[12]}" >Area: America</a>
+                        <a href="#" data-filter="${this.typeFilters[13]}" >Area: Antarctica</a>
+                        <a href="#" data-filter="${this.typeFilters[14]}" >Area: Asia</a>
+                        <a href="#" data-filter="${this.typeFilters[15]}" >Area: Europe</a>
+                        <a href="#" data-filter="${this.typeFilters[16]}" >Area: Oceania</a>
+                        <a href="#" data-filter="${this.typeFilters[17]}" >Area: Other</a>
+                    </div>
                 </div>
-            </div>
-            `;
+                `;
 
             this.newOrderSelectId = "mihaj-order-dropdown";
 
@@ -854,23 +1056,23 @@
             ];
 
             this.newOrderTemplate = `
-            <div id ='${this.newOrderSelectId}' class="filter-dropdown">
-                <button id="property-order-btn" class="filter-dropbtn"></button>
-                <div class="filter-dropdown-content">
-                    <a href="#" data-order="${this.newOrderFilters[0]}" >±‚∫ªº¯ ¡§∑ƒ</a>
-                    <a href="#" data-order="${this.newOrderFilters[1]}" >±∏∏≈≥Ø¬•(√÷Ω≈±∏∏≈º¯)</a>
-                    <a href="#" data-order="${this.newOrderFilters[2]}" >±∏∏≈≥Ø¬•(√÷√ ±∏∏≈º¯)</a>
-                    <a href="#" data-order="${this.newOrderFilters[3]}" >«ˆ¿Á∞°ƒ°(≥Ù¿∫º¯)</a>
-                    <a href="#" data-order="${this.newOrderFilters[4]}" >«ˆ¿Á∞°ƒ°(≥∑¿∫º¯)</a>
-                    <a href="#" data-order="${this.newOrderFilters[5]}" >∞°ƒ°(ªÛΩ¬º¯)($)</a>
-                    <a href="#" data-order="${this.newOrderFilters[6]}" >∞°ƒ°(«œ∂Ùº¯)($) </a>
-                    <a href="#" data-order="${this.newOrderFilters[7]}" >≈∏¿œºˆ(∏π¿∫º¯)</a>
-                    <a href="#" data-order="${this.newOrderFilters[8]}" >≈∏¿œºˆ(¿˚¿∫º¯)</a>
-                    <a href="#" data-order="${this.newOrderFilters[9]}" >¿ßƒ°∏Ì(Z-A)</a>
-                    <a href="#" data-order="${this.newOrderFilters[10]}" >¿ßƒ°∏Ì(A-Z)</a>
+                <div id ='${this.newOrderSelectId}' class="filter-dropdown">
+                    <button id="property-order-btn" class="filter-dropbtn"></button>
+                    <div class="filter-dropdown-content">
+                        <a href="#" data-order="${this.newOrderFilters[0]}" >¬±√¢¬∫¬ª¬º√∏ √Å¬§¬∑√Ñ</a>
+                        <a href="#" data-order="${this.newOrderFilters[1]}" >¬±¬∏¬∏√Ö¬≥¬Ø√Ç¬•(√É√ñ¬Ω√Ö¬±¬∏¬∏√Ö¬º√∏)</a>
+                        <a href="#" data-order="${this.newOrderFilters[2]}" >¬±¬∏¬∏√Ö¬≥¬Ø√Ç¬•(√É√ñ√É√ä¬±¬∏¬∏√Ö¬º√∏)</a>
+                        <a href="#" data-order="${this.newOrderFilters[3]}" >√á√∂√Ä√ß¬∞¬°√Ñ¬°(¬≥√¥√Ä¬∫¬º√∏)</a>
+                        <a href="#" data-order="${this.newOrderFilters[4]}" >√á√∂√Ä√ß¬∞¬°√Ñ¬°(¬≥¬∑√Ä¬∫¬º√∏)</a>
+                        <a href="#" data-order="${this.newOrderFilters[5]}" >¬∞¬°√Ñ¬°(¬ª√≥¬Ω√Ç¬º√∏)($) (desc)</a>
+                        <a href="#" data-order="${this.newOrderFilters[6]}" >¬∞¬°√Ñ¬°(√á√è¬∂√¥¬º√∏)($) (asc)</a>
+                        <a href="#" data-order="${this.newOrderFilters[7]}" >√Ö¬∏√Ä√è¬º√∂(¬∏¬π√Ä¬∫¬º√∏)</a>
+                        <a href="#" data-order="${this.newOrderFilters[8]}" >√Ö¬∏√Ä√è¬º√∂(√Ä√ª√Ä¬∫¬º√∏)</a>
+                        <a href="#" data-order="${this.newOrderFilters[9]}" >√Ä¬ß√Ñ¬°¬∏√≠(Z-A)</a>
+                        <a href="#" data-order="${this.newOrderFilters[10]}" >√Ä¬ß√Ñ¬°¬∏√≠(A-Z)</a>
+                    </div>
                 </div>
-            </div>
-            `;
+                `;
 
             this.cardsDataCache = new Map();
             //  TO REPLACE:
@@ -883,61 +1085,63 @@
             //  * #TRADEVALUE#
             //  * #LOCATION#
             //  * #TILECLASS#
+            //src="https://s3-ap-southeast-2.amazonaws.com/prod-app-media.earth2.io/thumbnails/#PROPERTYID#.jpg"
             this.cardTemplate = `
-                <div class="col-lg-4 col-md-6 col-12">
-                    <div class="card ">
-                        <a href="#propertyInfo/#PROPERTYID#">
-                            <div class="card-image">
-                                <img style="height: 320px; object-fit: cover" id="profile-landfield-img-2"
-                                    src="https://s3-ap-southeast-2.amazonaws.com/prod-app-media.earth2.io/thumbnails/#PROPERTYID#.jpg"
-                                    data-land-centre="#DATALANDCENTRE#">
-                                <div class="tile-count"><b>#TILECOUNT#</b> tiles</div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="card ">
+                            <a href="#propertyInfo/#PROPERTYID#">
+                                <div class="card-image">
+                                    <img style="height: 320px; object-fit: cover"
+                                        src="#IMGSRC#"
+                                        data-land-centre="#DATALANDCENTRE#"
+                                        onerror="#ONERROR#"
+                                        >
+                                    <div class="tile-count"><b>#TILECOUNT#</b> tiles</div>
+                                </div>
+                                <div class="card-content">
+                                    <div class="description">#DESCRIPTION#</div>
+                                    <div class="price">$#CURRENTVALUE# ($#PURCHASEVALUE#) #SELL# <div class="tileclass">Class #TILECLASS#</div></div>
+                                    <div class="location"><i class="material-icons">location_on</i>#DATALANDCENTRE#</div>
+                                    <div class="coordinates">#LOCATION#</div>
+                                </div>
+                            </a>
+                            <div class="card-action"> <a class="activator" data-for="#PROPERTYID#">Edit / Sell</a> </div>
+                            <div class="card-reveal">
+                                <div class="card-content">
+                                    <div class="input-field"> <input type="text" id="descriptionInput-#PROPERTYID#"> <label class="active" for="descriptionInput-#PROPERTYID#">Description</label> </div>
+                                    <div class="input-field"> <input type="text" disabled="true" id="locationInput-#PROPERTYID#"> <label class="active" for="locationInput-#PROPERTYID#">Location</label> </div>
+                                    <div class="input-field"> <input step="0.01" min="0" id="priceInput-#PROPERTYID#" type="number"> <label class="active" for="priceInput-#PROPERTYID#">How much would you like to sell for?</label> </div>
+                                    <div class="checkbox-group"> <label><input type="checkbox" id="availabiltyCheckbox-#PROPERTYID#" #ADVERTISED#><span>Advertise in Marketplace</span></label> </div>
+                                </div>
+                                <div class="card-action"> <a class="card-title" id="closeEditButton-#PROPERTYID#">Cancel</a> <a class="card-save">Save</a> </div>
                             </div>
-                            <div class="card-content">
-                                <div class="description">#DESCRIPTION#</div>
-                                <div class="price">$#CURRENTVALUE# ($#PURCHASEVALUE#) #SELL# <div class="tileclass">Class #TILECLASS#</div></div>
-                                <div class="location"><i class="material-icons">location_on</i>#DATALANDCENTRE#</div>
-                                <div class="coordinates">#LOCATION#</div>
-                            </div>
-                        </a>
-                        <div class="card-action"> <a class="activator" data-for="#PROPERTYID#">Edit / Sell</a> </div>
-                        <div class="card-reveal">
-                            <div class="card-content">
-                                <div class="input-field"> <input type="text" id="descriptionInput-#PROPERTYID#"> <label class="active" for="descriptionInput-#PROPERTYID#">Description</label> </div>
-                                <div class="input-field"> <input type="text" disabled="true" id="locationInput-#PROPERTYID#"> <label class="active" for="locationInput-#PROPERTYID#">Location</label> </div>
-                                <div class="input-field"> <input step="0.01" min="0" id="priceInput-#PROPERTYID#" type="number"> <label class="active" for="priceInput-#PROPERTYID#">How much would you like to sell for?</label> </div>
-                                <div class="checkbox-group"> <label><input type="checkbox" id="availabiltyCheckbox-#PROPERTYID#" #ADVERTISED#><span>Advertise in Marketplace</span></label> </div>
-                            </div>
-                            <div class="card-action"> <a class="card-title" id="closeEditButton-#PROPERTYID#">Cancel</a> <a class="card-save">Save</a> </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
 
             this.fadeOutDuration = 0.5;
 
             this.displayModeSwitchTemplate = `
-            <div class="display-switch-container">
-                <span class="display-switch-label">Normal view</span>
-                <label class="display-switch">
-                    <input type="checkbox" checked>
-                    <span class="display-slider round"></span>
-                </label>
-            </div>
-            `;
+                <div class="display-switch-container">
+                    <span class="display-switch-label">Normal view</span>
+                    <label class="display-switch">
+                        <input type="checkbox" checked>
+                        <span class="display-slider round"></span>
+                    </label>
+                </div>
+                `;
 
             this.propertyExportLinkTemplate = `
-            <div><a id="export-properties-csv" href="#"><span>ø¢ºø ∆ƒ¿œ∑Œ ≥ª∑¡πﬁ±‚</span></a></div>
-            `;
+                <div><a id="export-properties-csv" href="#"><span>¬ø¬¢¬º¬ø √Ü√Ñ√Ä√è¬∑√é ¬≥¬ª¬∑√Å¬π√û¬±√¢</span></a></div>
+                `;
 
             this.additionalHtml = `
-            <div class="profile-mihaj">
-                <div class="profile-mihaj support-me"><span>∞≥πﬂ¿⁄∏¶ ¡ˆø¯«ÿ¡÷ººø‰ (<ref-code>MSZY5BLXAP</ref-code>) or PAYPAL(<tip-paypal>csimbum@gmail.com</tip-paypal>)</span></div>
-                <div class="profile-mihaj contact-me"><span>∞≥πﬂ¿⁄ µΩ∫ƒ⁄µÂ æ∆¿Ãµ-> discord: <discord>mihaj#5170</discord></span></div>
-                <div class="profile-mihaj contact-me"><span>«—±€»≠ : ªı∫Æ¿Ã(INVESTOR CLUB and TALSA) -> discord: <discord>Daybreak#5428</discord></span></div>
-
-            </div>
-            `;
+                <div class="profile-mihaj">
+                    <div class="profile-mihaj support-me"><span>¬∞¬≥¬π√ü√Ä√ö¬∏¬¶ √Å√∂¬ø√∏√á√ò√Å√ñ¬º¬º¬ø√§ (<ref-code>MSZY5BLXAP</ref-code>) or by tipping on Paypal (<tip-paypal>csimbum@gmail.com</tip-paypal>)</span></div>
+                    <div class="profile-mihaj contact-me"><span>¬∞¬≥¬π√ü√Ä√ö ¬µ√∞¬Ω¬∫√Ñ√ö¬µ√• ¬æ√Ü√Ä√å¬µ√∞ -> discord: <discord>mihaj#5170</discord></span></div>
+<div class="profile-mihaj contact-me"><span>√á√ë¬±√õ√à¬≠ : ¬ª√µ¬∫¬Æ√Ä√å(INVESTOR CLUB and TALSA) -> discord: <discord>Daybreak#5428</discord></span></div>
+                </div>
+                `;
 
             this.helper = helperInstance;
             this.styleHandlerInstance = new StyleHandler(this.helper);
@@ -946,8 +1150,12 @@
         checkProfilePageUpgrade () {
             if (this.helper.isAvailable(window.location.hash) && window.location.hash.includes("profile")) {
 
-                if (window.location.hash.includes(window.auth0user.id)) {
-                    this.customiseProfilePage();
+                if (this.helper.isAvailable(window.auth0user)) {
+                    let linkParts = window.location.href.split("/");
+                    let userId = linkParts[linkParts.length - 1];
+                    let auth0userId = helper.isAvailable(window.auth0user) ? window.auth0user.id : null;
+
+                    this.customiseProfilePage(userId !== auth0userId, userId);
                 }
 
             } else {
@@ -955,7 +1163,7 @@
             }
         }
 
-        customiseProfilePage () {
+        customiseProfilePage (useAlternativeImmediately, profileId) {
             //customising the profile page.
             //1) remove filter
             //2) add new filters
@@ -963,37 +1171,24 @@
             //4) add new style for cards
             //5) pagination (?)
             ; (async () => {
-                this.helper.showCustomToast("success", "Starting profile page upgrade");
+                this.helper.showCustomToast(MessageSeverity.SUCCESS, "Starting profile page upgrade");
 
-                let cachedSuccess = await this.cacheProperties();
-                if (!cachedSuccess) {
-                    let maxRetry = 10;
-                    let retryCount = 1;
-                    while (retryCount < maxRetry) {
-                        console.log(`retry property caching ${retryCount}/${maxRetry}`);
-                        cachedSuccess = await this.cacheProperties();
-                        if (cachedSuccess) {
-                            break;
-                        } else {
-                            retryCount++;
-                        }
-                    }
-                }
+                let cachedSuccess = await this.cacheProperties(useAlternativeImmediately, profileId);
 
                 if (!cachedSuccess) {
-                    this.helper.showCustomToast(`error`, `something went wrong. Please reload page, if the issue persists: ${this.notifyDevMessage}`)
+                    this.helper.showCustomToast(MessageSeverity.ERROR, `something went wrong. Please reload page, if the issue persists: ${this.notifyDevMessage}`)
                 } else {
                     //await this.cacheImages();
 
                     this.styleHandlerInstance.addProfileStyles();
-                    this.removeReaddFilters();
+                    await this.removeReaddFilters(profileId);
                     this.addExtraHtml();
 
                     //let secondaryImage = document.querySelector(".profile-secondary-image");
                     //secondaryImage.src = secondaryImage.src.replace("svg", "png");
 
                     setTimeout(() => {
-                        this.helper.showCustomToast("success", "Upgrade finished");
+                        this.helper.showCustomToast(MessageSeverity.SUCCESS, "Upgrade finished");
                     }, 1000);
 
                 }
@@ -1008,45 +1203,47 @@
             }
         }
 
-        async cacheProperties () {
+        async cacheProperties (useAlternativeImmediately, profileId) {
 
-            try {
-                let properties = await api.getUserLandFields();
+            let firstPageData = await api.getUserLandfieldFirstPage(1, profileId);
+            if (firstPageData.count > 1000) {
+                console.log(`item count [${firstPageData.count}] over limit [1000], paging`);
+                useAlternativeImmediately = true;
+            }
 
-                if (properties != null) {
-                    properties.forEach(p => {
-                        let lastTransactionDate = p.transactionSet.map(tr => new Date(tr.time)).sort((a, b) => a < b)[0];
-                        p.purchasedDate = lastTransactionDate;
-                        let countryAndArea = this.helper.getCountryAndArea(p);
-                        if (this.helper.isAvailable(countryAndArea)) {
-                            p.area = countryAndArea.area;
-                            p.country = countryAndArea.country;
-                        } else {
-                            p.area = "Other";
-                            p.country = "";
-                        }
+            if (!useAlternativeImmediately) {
+                try {
+                    let properties = await api.getUserLandFields();
 
-                        p.valueIncreaseUSD = p.currentValue - p.purchaseValue;
-
-                        //get the #tags
-                    });
-
-                    if (properties !== "") {
+                    if (properties != null && properties != "") {
                         this.propertiesCache = properties;
                         window.propertiesCache = properties;
                         return true;
                     }
+
+                    return false;
+                } catch (e) {
+                    console.log("error in [cacheProperties]", e);
+                }
+            }
+
+            try {
+                let properties = await api.getUserLandFieldsPaged(profileId);
+                if (properties != null && properties != "") {
+                    this.propertiesCache = properties;
+                    window.propertiesCache = properties;
+                    return true;
                 }
 
                 return false;
             } catch (e) {
-                console.log("error in [cacheProperties]", e);
+                console.log("error in [cacheProperties 2]")
             }
 
             return false;
         }
 
-        removeReaddFilters () {
+        async removeReaddFilters (profileId) {
             try {
                 let currentFilter = document.querySelector(".select-wrapper");
                 if (this.helper.isAvailable(currentFilter)) {
@@ -1063,9 +1260,45 @@
                 this.addExportLink();
 
                 this.removeCards();
-                this.generateCards(this.typeFilter, this.order);
+                await this.generateCards(this.typeFilter, this.order);
+
+                await this.addNewNetWorths(profileId);
             } catch (e) {
                 console.log("error in [removeReaddFilters]", e);
+            }
+        }
+
+        async addNewNetWorths (profileId) {
+            let totalNetWorthInNewLandPrice = window.propertiesCache.reduce((a, b) => a + b.systemValue, 0).toFixed(2);
+            //console.log("net worth in new tile price: ", totalNetWorthInNewLandPrice);
+            document.querySelector(".networth b").insertAdjacentHTML("beforeend", `<span> (in new tile price: E$${totalNetWorthInNewLandPrice})</span>`);
+
+            if (profileId === window.auth0user.id) {
+                await api.getAllCreditTransactions();
+                //console.log("window.transactions: ", window.transactions);
+                let allCreditIn = window.transactions.reduce((s, t) => s += t.amount, 0);
+                let glasgowNumber = (((totalNetWorthInNewLandPrice - allCreditIn) / allCreditIn) * 100).toFixed(2);
+                console.log(`glasgow number: ${glasgowNumber}% = ((${totalNetWorthInNewLandPrice} - ${allCreditIn}) / ${allCreditIn})*100`);
+
+                let glasgowProfitPercentageHTML = `
+                <div class="glasgow-number" 
+                    style="
+                        color:darkblue; 
+                        padding-top: 5px; 
+                        padding-bottom: 5px; 
+                        padding-left: 5px; 
+                        border: 1px dashed rgba(138,43,226,0.5); 
+                        border-radius: 3px;
+                        background: rgba(138, 43, 226, 0.25);
+                        margin-top: 5px;
+                        margin-bottom: 5px;
+                        "
+                    title="(NewTileNetWorth - AllCreditsIn) / AllCreditsIn"
+                    >
+                    Glasgow profit %: <span style="color:snow; float: right; margin-right: 1em;">${glasgowNumber}%</span>
+                    <!-- <div>(NewTileNetWorth - AllCreditsIn) / AllCreditsIn</div> -->
+                </div>`;
+                document.querySelector(".settings-content-holder").insertAdjacentHTML("beforeend", glasgowProfitPercentageHTML);
             }
         }
 
@@ -1219,7 +1452,7 @@
 
         }
 
-        generateCards (filter, order) {
+        async generateCards (filter, order) {
             try {
                 //console.log(`generate cards filter:[${filter} - ${typeof(filter)}] order:[${order} - ${typeof(order)}]`);
                 let newPropertiesData = this.filterAndOrderData(filter, order);
@@ -1230,7 +1463,35 @@
                 } else {
 
                     let newCards = [];
-                    newPropertiesData.forEach(propertyData => {
+
+                    let amazonAwsLinkTemplate = "https://s3-ap-southeast-2.amazonaws.com/prod-app-media.earth2.io/thumbnails/#PROPERTYID#.jpg";
+                    let mapboxApiLinkTemplate = "https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/#CENTER#%7D,%2016.0,%200.0,%200.0/520x400?access_token=#ACCESSTOKEN#";
+
+                    let mapboxImageDate = Date.parse("2021-07-01");
+                    for (let propertyData of newPropertiesData) {
+                        let imageSource = "";
+                        let awsLink = amazonAwsLinkTemplate.replaceAll("#PROPERTYID#", propertyData.id);
+
+                        imageSource = awsLink;
+                        if (propertyData.purchasedDate > mapboxImageDate) {
+                            let centerData = propertyData
+                                .center
+                                .replace(", ", " ").replace("(", "").replace(")", "")
+                                .split(" ")
+                                .map(c => parseFloat(c).toFixed(6))
+                                .join(",%20")
+                                ;
+                            //console.log("center data: ", centerData);
+
+
+                            let mapboxLink = mapboxApiLinkTemplate
+                                //.replaceAll("#CENTER#", propertyData.center.replace(", ", ",%20").replace("(","").replace(")",""))
+                                .replaceAll("#CENTER#", centerData)
+                                .replaceAll("#ACCESSTOKEN", window.mapboxAccessToken);
+
+                            imageSource = mapboxLink;
+                        }
+
                         let newCard = this.cardTemplate
                             .replaceAll("#PROPERTYID#", propertyData.id)
                             .replaceAll("#DATALANDCENTRE#", propertyData.center)
@@ -1243,9 +1504,11 @@
                             .replaceAll("#TILECLASS#", propertyData.tileClass)
                             .replaceAll("#SELL#", propertyData.forSale ? `<span class="land-price"> ${propertyData.price.toFixed(2)} <span class="buy-tag">BUY</span> </span>` : ``)
                             .replaceAll("#ADVERTISED#", propertyData.forSale ? "checked" : "")
+                            .replaceAll("#IMGSRC#", imageSource)
+                            .replaceAll("#ONERROR#", "onImageError")
                             ;
                         newCards.push(newCard);
-                    });
+                    }
 
                     let container = document.querySelector(".portfolio-content.card-list .row");
                     newCards.forEach(card => { container.insertAdjacentHTML("beforeend", card); });
@@ -1398,21 +1661,21 @@
                 let forSale = cardElement.querySelector(".checkbox-group input[type='checkbox']").checked;
                 let forSalePrice = inputFields.filter(i => i.id.includes("price"))[0].value;
                 if (!parseFloat(forSalePrice)) {
-                    this.helper.showCustomToast("error", "invalid for sale value");
+                    this.helper.showCustomToast(MessageSeverity.ERROR, "invalid for sale value");
                 } else {
                     let query = `mutation {
-                        editMyLandfield(
-                            description: "#DESCRIPTION#",
-                            location: "#LOCATION#",
-                            price: #FORSALEPRICE#,
-                            forSale: #FORSALE#,
-                            landfieldId: "#PROPERTYID#"
-                        ) {
-                            landfields {
-                                id
+                            editMyLandfield(
+                                description: "#DESCRIPTION#",
+                                location: "#LOCATION#",
+                                price: #FORSALEPRICE#,
+                                forSale: #FORSALE#,
+                                landfieldId: "#PROPERTYID#"
+                            ) {
+                                landfields {
+                                    id
+                                }
                             }
-                        }
-                    }`;
+                        }`;
 
                     let newDescription = inputFields.filter(i => i.id.includes("description"))[0].value;
 
@@ -1445,10 +1708,10 @@
 
                     if (this.helper.isAvailable(result.errors)) {
                         //error
-                        this.helper.showCustomToast("error", result.errors[0].message);
+                        this.helper.showCustomToast(MessageSeverity.ERROR, result.errors[0].message);
                     } else {
                         //success
-                        this.helper.showCustomToast("success", "Changes saved successfully");
+                        this.helper.showCustomToast(MessageSeverity.SUCCESS, "Changes saved successfully");
                         cardElement.querySelector("a.card-title").click();
 
                         property.forSale = forSale;
@@ -1456,7 +1719,7 @@
                         property.description = newDescription;
 
                         this.removeCards();
-                        this.generateCards(this.typeFilter, this.order);
+                        await this.generateCards(this.typeFilter, this.order);
                     }
                 }
             } catch (e) {
@@ -1542,7 +1805,7 @@
                     return result;
                 });
 
-                window.allPropertiesCSV = "If you want to thank me -> use my code -->MSZY5BLXAP or tip (Paypal: csimbum@gmail.com)\r\n"
+                window.allPropertiesCSV = "If you want to thank me:\r\nuse my code: MSZY5BLXAP\r\n or tip (Paypal: csimbum@gmail.com)\r\ncontact: discord: mihaj#5170\r\n"
                     + "Country,Location,Description,For sale?,Tile count, Tile class,Purchase date,Price paid,Current value,Value %,For Sale Value,Sale vs New Land, Sale vs Price Paid,Link"
                     + ",Price for 100% profit,200% profit,300% profit,400% profit,500% profit"
                     + ",Latitude,Longitude"
